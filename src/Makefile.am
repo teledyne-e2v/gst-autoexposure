@@ -16,7 +16,7 @@ plugin_LTLIBRARIES = libgstautoexposure.la
 ## Plugin 1
 
 # sources used to compile this plug-in
-libgstautoexposure_la_SOURCES = gstautoexposure.c gstautoexposure.h
+libgstautoexposure_la_SOURCES = gstautoexposure.c gstautoexposure.h api.c api.h
 
 # compiler and linker flags used to compile this plugin, set in configure.ac
 libgstautoexposure_la_CFLAGS = $(GST_CFLAGS)

@@ -65,6 +65,9 @@ G_BEGIN_DECLS
 typedef struct _Gstautoexposure      Gstautoexposure;
 typedef struct _GstautoexposureClass GstautoexposureClass;
 
+static void gst_autoexposure_finalize(GObject *object);
+int init=0;
+
 struct _Gstautoexposure
 {
   GstElement element;
@@ -72,6 +75,7 @@ struct _Gstautoexposure
   GstPad *sinkpad, *srcpad;
 
   gboolean silent;
+  gboolean work;
 };
 
 struct _GstautoexposureClass 

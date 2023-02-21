@@ -77,7 +77,8 @@ enum
 enum
 {
   PROP_0,
-  PROP_SILENT
+  PROP_SILENT,
+  PROP_WORK
 };
 
 /* the capabilities of the inputs and outputs.
@@ -121,17 +122,20 @@ gst_autoexposure_class_init (GstautoexposureClass * klass)
 
   gobject_class->set_property = gst_autoexposure_set_property;
   gobject_class->get_property = gst_autoexposure_get_property;
-
+  gobject_class->finalize = gst_autoexposure_finalize;
   g_object_class_install_property (gobject_class, PROP_SILENT,
       g_param_spec_boolean ("silent", "Silent", "Produce verbose output ?",
           FALSE, G_PARAM_READWRITE));
+ g_object_class_install_property (gobject_class, PROP_WORK,
+      g_param_spec_boolean ("work", "Work", "enable/disable work",
+          TRUE, G_PARAM_READWRITE));
 
   gst_element_class_set_details_simple(gstelement_class,
     "autoexposure",
     "FIXME:Generic",
     "FIXME:Generic Template Element",
     "teledyne <<user@hostname.org>>");
-
+	
   gst_element_class_add_pad_template (gstelement_class,
       gst_static_pad_template_get (&src_factory));
   gst_element_class_add_pad_template (gstelement_class,
@@ -159,6 +163,10 @@ gst_autoexposure_init (Gstautoexposure * filter)
   gst_element_add_pad (GST_ELEMENT (filter), filter->srcpad);
 
   filter->silent = FALSE;
+  filter->work = TRUE;
+
+
+  initialization("/dev/video0",2);
 }
 
 static void
@@ -170,6 +178,9 @@ gst_autoexposure_set_property (GObject * object, guint prop_id,
   switch (prop_id) {
     case PROP_SILENT:
       filter->silent = g_value_get_boolean (value);
+      break;
+    case PROP_WORK:
+      filter->work = g_value_get_boolean (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -186,6 +197,9 @@ gst_autoexposure_get_property (GObject * object, guint prop_id,
   switch (prop_id) {
     case PROP_SILENT:
       g_value_set_boolean (value, filter->silent);
+      break;
+    case PROP_WORK:
+      g_value_set_boolean (value, filter->work);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -223,6 +237,7 @@ gst_autoexposure_sink_event (GstPad * pad, GstObject * parent, GstEvent * event)
       ret = gst_pad_event_default (pad, parent, event);
       break;
   }
+
   return ret;
 }
 
@@ -236,8 +251,6 @@ gst_autoexposure_chain (GstPad * pad, GstObject * parent, GstBuffer * buf)
 
   filter = GST_AUTOEXPOSURE (parent);
 
-  if (filter->silent == FALSE)
-    g_print ("I'm plugged, therefore I'm in.\n");
 
   /* just push out the incoming buffer without touching it */
 
@@ -255,8 +268,10 @@ if (!res)
 g_print("could not get snapshot dimension\n");
 exit(-1);
 }
-g_print("%dx%d\n", width, height);
 
+
+
+if(filter->work){
 
 int tmp_mean;
 float global_mean=0;
@@ -272,11 +287,48 @@ for(int y=0;y<height;y++)
 global_mean=global_mean/height;
 g_print("%f\n",global_mean);
 
+if(global_mean<60)
+{
+	int gain = get_control("analog_gain");
+	if(gain== get_control_max("analog_gain"))
+	{
+		int gain_d=get_control("digital_gain");
+		set_control("digital_gain",gain_d+20);
+	}
+	else
+	{
+		set_control("analog_gain",gain+1);
+	}
+	
+}
+else if(global_mean>110)
+{	
+	int gain=get_control("digital_gain");
+	if(gain== get_control_min("digital_gain"))
+	{
+		int gain_a=get_control("analog_gain");
+		set_control("analog_gain",gain_a-1);
+	}
+	else
+	{
+		set_control("digital_gain",gain-20);
+	}
+}
+
+}
+
 gst_buffer_unmap(buf, &map);
 
 
 
+
   return gst_pad_push (filter->srcpad, buf);
+}
+
+static void gst_autoexposure_finalize(GObject *object)
+{
+	g_print("driver closed\n");
+	close_driver_access();
 }
 
 
