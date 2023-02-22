@@ -78,7 +78,8 @@ enum
 {
   PROP_0,
   PROP_SILENT,
-  PROP_WORK
+  PROP_WORK,
+  PROP_OPTIMIZE
 };
 
 /* the capabilities of the inputs and outputs.
@@ -129,6 +130,8 @@ gst_autoexposure_class_init (GstautoexposureClass * klass)
  g_object_class_install_property (gobject_class, PROP_WORK,
       g_param_spec_boolean ("work", "Work", "enable/disable work",
           TRUE, G_PARAM_READWRITE));
+ g_object_class_install_property (gobject_class, PROP_OPTIMIZE,
+      g_param_spec_int ("optimize", "Optimize", "Optimization level",0,5,0, G_PARAM_READWRITE));
 
   gst_element_class_set_details_simple(gstelement_class,
     "autoexposure",
@@ -164,6 +167,7 @@ gst_autoexposure_init (Gstautoexposure * filter)
 
   filter->silent = FALSE;
   filter->work = TRUE;
+  filter->optimize=0;
 
 
   initialization("/dev/video0",2);
@@ -182,6 +186,8 @@ gst_autoexposure_set_property (GObject * object, guint prop_id,
     case PROP_WORK:
       filter->work = g_value_get_boolean (value);
       break;
+    case PROP_OPTIMIZE:
+      filter->optimize = g_value_get_int (value);
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -201,6 +207,8 @@ gst_autoexposure_get_property (GObject * object, guint prop_id,
     case PROP_WORK:
       g_value_set_boolean (value, filter->work);
       break;
+    case PROP_OPTIMIZE:
+      g_value_set_int (value, filter->optimize);
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -271,21 +279,24 @@ exit(-1);
 
 
 
+
+
+
 if(filter->work){
 
 int tmp_mean;
 float global_mean=0;
-for(int y=0;y<height;y++)
+for(int y=0;y<height;y+=1+filter->optimize)
 {
 	tmp_mean=0;
-	for (int x=0;x<width;x++)
+	for (int x=0;x<width;x+=1+filter->optimize)
 	{
 		tmp_mean+=map.data[(y*width)+x];
 	}
-	global_mean+=tmp_mean/((float)width);
+	global_mean+=(tmp_mean*(1+filter->optimize))/((float)width);
 }
-global_mean=global_mean/height;
-g_print("%f\n",global_mean);
+global_mean=(global_mean*(1+filter->optimize))/(height);
+
 
 if(global_mean<60)
 {

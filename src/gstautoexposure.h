@@ -76,6 +76,7 @@ struct _Gstautoexposure
 
   gboolean silent;
   gboolean work;
+  gint optimize;
 };
 
 struct _GstautoexposureClass 
