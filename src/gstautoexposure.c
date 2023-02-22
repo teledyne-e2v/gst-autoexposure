@@ -61,9 +61,8 @@
 #endif
 
 #include <gst/gst.h>
-#include "api.h"
 #include "gstautoexposure.h"
-
+#include "algorithm.h"
 GST_DEBUG_CATEGORY_STATIC (gst_autoexposure_debug);
 #define GST_CAT_DEFAULT gst_autoexposure_debug
 
@@ -79,7 +78,9 @@ enum
   PROP_0,
   PROP_SILENT,
   PROP_WORK,
-  PROP_OPTIMIZE
+  PROP_OPTIMIZE,
+  PROP_MINIMUMFPS,
+  PROP_USEEXPOSITIONTIME
 };
 
 /* the capabilities of the inputs and outputs.
@@ -130,9 +131,14 @@ gst_autoexposure_class_init (GstautoexposureClass * klass)
  g_object_class_install_property (gobject_class, PROP_WORK,
       g_param_spec_boolean ("work", "Work", "enable/disable work",
           TRUE, G_PARAM_READWRITE));
+          g_object_class_install_property (gobject_class, PROP_WORK,
+      g_param_spec_boolean ("useExpositionTime", "UseExpositionTime", "enable/disable exposition time usage",
+          TRUE, G_PARAM_READWRITE));
  g_object_class_install_property (gobject_class, PROP_OPTIMIZE,
       g_param_spec_int ("optimize", "Optimize", "Optimization level",0,5,0, G_PARAM_READWRITE));
-
+  g_object_class_install_property (gobject_class, PROP_MINIMUMFPS,
+g_param_spec_int ("minimumfps", "Minimumfps", "minimum fps tolerate",
+5, 1000, 5, G_PARAM_READWRITE));
   gst_element_class_set_details_simple(gstelement_class,
     "autoexposure",
     "FIXME:Generic",
@@ -168,6 +174,8 @@ gst_autoexposure_init (Gstautoexposure * filter)
   filter->silent = FALSE;
   filter->work = TRUE;
   filter->optimize=0;
+  filter->minimumdps=100;
+  filter->useExpositionTime=TRUE;
 
 
   initialization("/dev/video0",2);
@@ -186,8 +194,15 @@ gst_autoexposure_set_property (GObject * object, guint prop_id,
     case PROP_WORK:
       filter->work = g_value_get_boolean (value);
       break;
+    case PROP_USEEXPOSITIONTIME:
+      filter->useExpositionTime = g_value_get_boolean (value);
+      break;
     case PROP_OPTIMIZE:
       filter->optimize = g_value_get_int (value);
+      break;
+    case PROP_MINIMUMFPS:
+      filter->minimumfps = g_value_get_int (value);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -207,8 +222,15 @@ gst_autoexposure_get_property (GObject * object, guint prop_id,
     case PROP_WORK:
       g_value_set_boolean (value, filter->work);
       break;
+    case PROP_USEEXPOSITIONTIME:
+      g_value_set_boolean (value, filter->useExpositionTime);
+      break;
     case PROP_OPTIMIZE:
       g_value_set_int (value, filter->optimize);
+      break;
+    case PROP_MINIMUMFPS:
+      g_value_set_int (value, filter->minimumfps);
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -298,33 +320,15 @@ for(int y=0;y<height;y+=1+filter->optimize)
 global_mean=(global_mean*(1+filter->optimize))/(height);
 
 
-if(global_mean<60)
+if(filter->useExpositionTime)
 {
-	int gain = get_control("analog_gain");
-	if(gain== get_control_max("analog_gain"))
-	{
-		int gain_d=get_control("digital_gain");
-		set_control("digital_gain",gain_d+20);
-	}
-	else
-	{
-		set_control("analog_gain",gain+1);
-	}
-	
+  algorithm_with_exposition(global_mean);
+
 }
-else if(global_mean>110)
-{	
-	int gain=get_control("digital_gain");
-	if(gain== get_control_min("digital_gain"))
-	{
-		int gain_a=get_control("analog_gain");
-		set_control("analog_gain",gain_a-1);
-	}
-	else
-	{
-		set_control("digital_gain",gain-20);
-	}
+else{
+algorithm_without_exposition(global_mean,filter->minimumfps);
 }
+
 
 }
 
