@@ -3,7 +3,7 @@
  * Copyright (C) 2005 Thomas Vander Stichele <thomas@apestaart.org>
  * Copyright (C) 2005 Ronald S. Bultje <rbultje@ronald.bitfreak.net>
  * Copyright (C) 2023 teledyne <<user@hostname.org>>
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -54,19 +54,19 @@ G_BEGIN_DECLS
 #define GST_TYPE_AUTOEXPOSURE \
   (gst_autoexposure_get_type())
 #define GST_AUTOEXPOSURE(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_AUTOEXPOSURE,Gstautoexposure))
+  (G_TYPE_CHECK_INSTANCE_CAST((obj), GST_TYPE_AUTOEXPOSURE, Gstautoexposure))
 #define GST_AUTOEXPOSURE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_AUTOEXPOSURE,GstautoexposureClass))
+  (G_TYPE_CHECK_CLASS_CAST((klass), GST_TYPE_AUTOEXPOSURE, GstautoexposureClass))
 #define GST_IS_AUTOEXPOSURE(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_AUTOEXPOSURE))
+  (G_TYPE_CHECK_INSTANCE_TYPE((obj), GST_TYPE_AUTOEXPOSURE))
 #define GST_IS_AUTOEXPOSURE_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_AUTOEXPOSURE))
+  (G_TYPE_CHECK_CLASS_TYPE((klass), GST_TYPE_AUTOEXPOSURE))
 
-typedef struct _Gstautoexposure      Gstautoexposure;
+typedef struct _Gstautoexposure Gstautoexposure;
 typedef struct _GstautoexposureClass GstautoexposureClass;
 
 static void gst_autoexposure_finalize(GObject *object);
-int init=0;
+int init = 0;
 
 struct _Gstautoexposure
 {
@@ -79,15 +79,17 @@ struct _Gstautoexposure
   gint optimize;
   gint maxexposition;
   gint latency;
+  gint lowerbound;
+  gint upperbound;
   gboolean useExpositionTime;
 };
 
-struct _GstautoexposureClass 
+struct _GstautoexposureClass
 {
   GstElementClass parent_class;
 };
 
-GType gst_autoexposure_get_type (void);
+GType gst_autoexposure_get_type(void);
 
 G_END_DECLS
 
