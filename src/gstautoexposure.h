@@ -81,6 +81,10 @@ struct _Gstautoexposure
   gint latency;
   gint lowerbound;
   gint upperbound;
+  gint ROI1x;
+  gint ROI1y;
+  gint ROI2x;
+  gint ROI2y;
   gboolean useExpositionTime;
 };
 
