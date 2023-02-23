@@ -133,7 +133,20 @@ int64_t get_control_min(char* name)
 	}
 	return control_list.controls[i].minimum;
 }
-
+int64_t get_control_default(char* name)
+{
+	int i=0;
+	while(strcmp(name,control_list.controls[i].name)!=0)
+	{
+		if (i==control_list.number_of_controls)
+		{	
+			printf("control not found\n");
+			return 0;
+		}
+		i++;
+	}
+	return control_list.controls[i].default_value;
+}
 void set_control_by_code(int code, int value)
 {
         struct v4l2_ext_controls ecs;

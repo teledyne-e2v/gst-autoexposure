@@ -79,8 +79,9 @@ enum
   PROP_SILENT,
   PROP_WORK,
   PROP_OPTIMIZE,
-  PROP_MINIMUMFPS,
-  PROP_USEEXPOSITIONTIME
+  PROP_MAXEXPOSITION,
+  PROP_USEEXPOSITIONTIME,
+  PROP_LATENCY
 };
 
 /* the capabilities of the inputs and outputs.
@@ -131,14 +132,16 @@ gst_autoexposure_class_init (GstautoexposureClass * klass)
  g_object_class_install_property (gobject_class, PROP_WORK,
       g_param_spec_boolean ("work", "Work", "enable/disable work",
           TRUE, G_PARAM_READWRITE));
-          g_object_class_install_property (gobject_class, PROP_WORK,
+          g_object_class_install_property (gobject_class, PROP_USEEXPOSITIONTIME,
       g_param_spec_boolean ("useExpositionTime", "UseExpositionTime", "enable/disable exposition time usage",
           TRUE, G_PARAM_READWRITE));
  g_object_class_install_property (gobject_class, PROP_OPTIMIZE,
       g_param_spec_int ("optimize", "Optimize", "Optimization level",0,5,0, G_PARAM_READWRITE));
-  g_object_class_install_property (gobject_class, PROP_MINIMUMFPS,
-g_param_spec_int ("minimumfps", "Minimumfps", "minimum fps tolerate",
-5, 1000, 5, G_PARAM_READWRITE));
+ g_object_class_install_property (gobject_class, PROP_LATENCY,
+      g_param_spec_int ("latency", "Latency", "pipeline latency",0,100,4, G_PARAM_READWRITE));
+  g_object_class_install_property (gobject_class, PROP_MAXEXPOSITION,
+g_param_spec_int ("maxexposition", "Maxexposition", "maximum exposition tolerate",
+5, 200000, 5, G_PARAM_READWRITE));
   gst_element_class_set_details_simple(gstelement_class,
     "autoexposure",
     "FIXME:Generic",
@@ -174,8 +177,9 @@ gst_autoexposure_init (Gstautoexposure * filter)
   filter->silent = FALSE;
   filter->work = TRUE;
   filter->optimize=0;
-  filter->minimumdps=100;
+  filter->maxexposition=30000;
   filter->useExpositionTime=TRUE;
+  filter->latency=4;
 
 
   initialization("/dev/video0",2);
@@ -200,8 +204,11 @@ gst_autoexposure_set_property (GObject * object, guint prop_id,
     case PROP_OPTIMIZE:
       filter->optimize = g_value_get_int (value);
       break;
-    case PROP_MINIMUMFPS:
-      filter->minimumfps = g_value_get_int (value);
+    case PROP_MAXEXPOSITION:
+      filter->maxexposition = g_value_get_int (value);
+      break;
+    case PROP_LATENCY:
+      filter->latency = g_value_get_int (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -228,8 +235,11 @@ gst_autoexposure_get_property (GObject * object, guint prop_id,
     case PROP_OPTIMIZE:
       g_value_set_int (value, filter->optimize);
       break;
-    case PROP_MINIMUMFPS:
-      g_value_set_int (value, filter->minimumfps);
+    case PROP_LATENCY:
+      g_value_set_int (value, filter->latency);
+      break;
+    case PROP_MAXEXPOSITION:
+      g_value_set_int (value, filter->maxexposition);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -300,10 +310,6 @@ exit(-1);
 }
 
 
-
-
-
-
 if(filter->work){
 
 int tmp_mean;
@@ -319,16 +325,14 @@ for(int y=0;y<height;y+=1+filter->optimize)
 }
 global_mean=(global_mean*(1+filter->optimize))/(height);
 
-
+g_print("global_mean : %f\n",global_mean);
 if(filter->useExpositionTime)
 {
-  algorithm_with_exposition(global_mean);
-
+  algorithm_with_exposition_v3(global_mean,filter->maxexposition,filter->latency);
 }
 else{
-algorithm_without_exposition(global_mean,filter->minimumfps);
+algorithm_without_exposition_v2(global_mean,filter->latency);
 }
-
 
 }
 

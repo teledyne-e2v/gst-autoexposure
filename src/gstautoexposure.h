@@ -77,7 +77,8 @@ struct _Gstautoexposure
   gboolean silent;
   gboolean work;
   gint optimize;
-  gint minimumfps;
+  gint maxexposition;
+  gint latency;
   gboolean useExpositionTime;
 };
 

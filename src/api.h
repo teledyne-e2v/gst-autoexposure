@@ -38,6 +38,7 @@ struct buffer
 
 int64_t get_control_min(char* name);
 int64_t get_control_max(char* name);
+int64_t get_control_default(char* name);
 struct Control_List *get_control_list();
 int get_control(char* name);
 void set_control(char* name, int value);
