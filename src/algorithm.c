@@ -38,7 +38,8 @@ void algorithm_without_exposition_v2(float global_mean, int latency,int lowerbou
 	int gain = get_control("analog_gain");
 	int max_gain = get_control_max("analog_gain");
 	int newGain;
-	int calc = (log10(70) + 0.10 * gain - log10(global_mean)) / 0.10;
+	int interbound=(upperbound+lowerbound)/2;
+	int calc = (log10(interbound) + 0.10 * gain - log10(global_mean)) / 0.10;
 	printf(" calc : %d\nproc = %d\n", calc, proc_once2);
 	if (proc_once2 == 0)
 	{
@@ -59,7 +60,7 @@ void algorithm_without_exposition_v2(float global_mean, int latency,int lowerbou
 		proc_once2++;
 	}
 
-	if (proc_once2 > latency && (global_mean > 110 || global_mean < 50))
+	if (proc_once2 > latency && (global_mean > upperbound || global_mean < lowerbound))
 	{
 		proc_once2 = 0;
 	}
@@ -71,7 +72,7 @@ void algorithm_with_exposition_v3(float global_mean, int maxExp, int latency,int
 	float delta = maxExp / exp1;
 	float x = 70 / global_mean;
 	int gain = get_control("analog_gain");
-	if (global_mean < 50 && (proc_Once == 0 || exp1 != maxExp))
+	if (global_mean < lowerbound && (proc_Once == 0 || exp1 != maxExp))
 	{
 		proc_Once = 1;
 		printf("exp1 : %d maxExp: %d x: %f delta: %f\n", exp1, maxExp, x, delta);
@@ -86,11 +87,11 @@ void algorithm_with_exposition_v3(float global_mean, int maxExp, int latency,int
 			algorithm_without_exposition_v2(delta * global_mean, latency,lowerbound,upperbound);
 		}
 	}
-	else if (global_mean < 50 && proc_Once > latency)
+	else if (global_mean < lowerbound && proc_Once > latency)
 	{
 		algorithm_without_exposition_v2(global_mean, latency,lowerbound,upperbound);
 	}
-	else if (global_mean > 110)
+	else if (global_mean > upperbound)
 	{
 
 		if (gain > 0)
@@ -108,7 +109,7 @@ void algorithm_with_exposition_v3(float global_mean, int maxExp, int latency,int
 	{
 		proc_Once++;
 	}
-	if (proc_Once > latency && gain == 0 && (global_mean > 110 || global_mean < 50))
+	if (proc_Once > latency && gain == 0 && (global_mean > upperbound || global_mean < lowerbound))
 	{
 		proc_Once = 0;
 	}
