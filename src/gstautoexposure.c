@@ -87,7 +87,8 @@ enum
   PROP_ROI1X,
   PROP_ROI1Y,
   PROP_ROI2X,
-  PROP_ROI2Y
+  PROP_ROI2Y,
+  PROP_USEHISTOGRAM
 };
 
 /* the capabilities of the inputs and outputs.
@@ -156,6 +157,9 @@ gst_autoexposure_class_init(GstautoexposureClass *klass)
                                   g_param_spec_int("latency", "Latency", "pipeline latency", 0, 1920, 1920, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_ROI2Y,
                                   g_param_spec_int("latency", "Latency", "pipeline latency", 0, 1080, 1080, G_PARAM_READWRITE));
+  g_object_class_install_property(gobject_class, PROP_USEHISTOGRAM,
+                                  g_param_spec_boolean("useHistogram", "UseHistogram", "enable/disable exposition time usage",
+                                                       TRUE, G_PARAM_READWRITE));
 
   g_object_class_install_property(gobject_class, PROP_MAXEXPOSITION,
                                   g_param_spec_int("maxexposition", "Maxexposition", "maximum exposition tolerate",
@@ -204,6 +208,7 @@ gst_autoexposure_init(Gstautoexposure *filter)
   filter->ROI1y = 0;
   filter->ROI2x = 1920;
   filter->ROI2y = 1080;
+  filter->useHistogram = TRUE;
 
   initialization("/dev/video0", 2);
 }
@@ -224,6 +229,9 @@ gst_autoexposure_set_property(GObject *object, guint prop_id,
     break;
   case PROP_USEEXPOSITIONTIME:
     filter->useExpositionTime = g_value_get_boolean(value);
+    break;
+  case PROP_USEHISTOGRAM:
+    filter->useHistogram = g_value_get_boolean(value);
     break;
   case PROP_OPTIMIZE:
     filter->optimize = g_value_get_int(value);
@@ -274,6 +282,9 @@ gst_autoexposure_get_property(GObject *object, guint prop_id,
     break;
   case PROP_USEEXPOSITIONTIME:
     g_value_set_boolean(value, filter->useExpositionTime);
+    break;
+  case PROP_USEHISTOGRAM:
+    g_value_set_boolean(value, filter->useHistogram);
     break;
   case PROP_OPTIMIZE:
     g_value_set_int(value, filter->optimize);
@@ -346,6 +357,22 @@ gst_autoexposure_sink_event(GstPad *pad, GstObject *parent, GstEvent *event)
 /* chain function
  * this function does the actual processing
  */
+double valeur_moyenne(int histo[], int taille) {
+    long int somme = 0;
+    int nb_elements = 0;
+
+    for (int i = 0; i < taille; i++) {
+        somme += (long int) histo[i] * i;
+        nb_elements += histo[i];
+    }
+
+    if (nb_elements == 0) {
+        return 0.0;
+    } else {
+        return (double) somme / nb_elements;
+    }
+}
+
 static GstFlowReturn
 gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
 {
@@ -372,28 +399,41 @@ gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
 
   if (filter->work)
   {
-
-    int tmp_mean;
-    float global_mean = 0;
-    for (int y = filter->ROI1y; y < filter->ROI2y; y += 1 + filter->optimize)
+    if (!filter->useHistogram)
     {
-      tmp_mean = 0;
-      for (int x = filter->ROI1x; x < filter->ROI2x; x += 1 + filter->optimize)
+      int tmp_mean;
+      float global_mean = 0;
+      for (int y = filter->ROI1y; y < filter->ROI2y; y += 1 + filter->optimize)
       {
-        tmp_mean += map.data[(y * width) + x];
+        tmp_mean = 0;
+        for (int x = filter->ROI1x; x < filter->ROI2x; x += 1 + filter->optimize)
+        {
+          tmp_mean += map.data[(y * width) + x];
+        }
+        global_mean += (tmp_mean * (1 + filter->optimize)) / ((float)width);
       }
-      global_mean += (tmp_mean * (1 + filter->optimize)) / ((float)width);
-    }
-    global_mean = (global_mean * (1 + filter->optimize)) / (height);
+      global_mean = (global_mean * (1 + filter->optimize)) / (height);
 
-    g_print("global_mean : %f\n", global_mean);
-    if (filter->useExpositionTime)
-    {
-      algorithm_with_exposition_v3(global_mean, filter->maxexposition, filter->latency, filter->lowerbound, filter->upperbound);
+      g_print("global_mean : %f\n", global_mean);
+      if (filter->useExpositionTime)
+      {
+        algorithm_with_exposition_v3(global_mean, filter->maxexposition, filter->latency, filter->lowerbound, filter->upperbound);
+      }
+      else
+      {
+        algorithm_without_exposition_v2(global_mean, filter->latency, filter->lowerbound, filter->upperbound);
+      }
     }
-    else
-    {
-      algorithm_without_exposition_v2(global_mean, filter->latency, filter->lowerbound, filter->upperbound);
+    else{
+      int hist[256];
+      for (int y = filter->ROI1y; y < filter->ROI2y; y += 1 + filter->optimize)
+      {
+        for (int x = filter->ROI1x; x < filter->ROI2x; x += 1 + filter->optimize)
+        {
+          hist[map.data[(y * width) + x]] += 1;
+        }
+      }
+      g_print("%f\n",valeur_moyenne(hist,256));
     }
   }
 
