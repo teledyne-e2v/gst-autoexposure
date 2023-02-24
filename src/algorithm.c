@@ -39,7 +39,7 @@ void algorithm_without_exposition_v2(float global_mean, int latency,int lowerbou
 	int max_gain = get_control_max("analog_gain");
 	int newGain;
 	int interbound=(upperbound+lowerbound)/2;
-	int calc = (log10(interbound) + 0.10 * gain - log10(global_mean)) / 0.10;
+	int calc = (log10(interbound) + 0.09 * gain - log10(global_mean)) / 0.07;
 	printf(" calc : %d\nproc = %d\n", calc, proc_once2);
 	if (proc_once2 == 0)
 	{
@@ -159,7 +159,7 @@ void algorithm_with_exposition_v2(float global_mean, int maxExp)
 		int gain = get_control("analog_gain");
 		int newExp;
 		int newGain;
-		printf("%f\n\n\n", exp1 * exp((float)(gain - 3) * 0.1662) * 2.5837);
+		printf("%f\n", exp1 * exp((float)(gain - 3) * 0.1662) * 2.5837);
 		if (exp1 * exp((float)(gain - 3) * 0.1662) * 2.5837 > delta)
 		{
 
