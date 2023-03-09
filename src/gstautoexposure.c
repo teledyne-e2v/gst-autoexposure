@@ -87,7 +87,9 @@ enum
   PROP_ROI1X,
   PROP_ROI1Y,
   PROP_ROI2X,
-  PROP_ROI2Y
+  PROP_ROI2Y,
+  PROP_USEHISTOGRAM,
+  PROP_HISTOGRAM
 };
 
 /* the capabilities of the inputs and outputs.
@@ -139,6 +141,9 @@ gst_autoexposure_class_init(GstautoexposureClass *klass)
   g_object_class_install_property(gobject_class, PROP_USEEXPOSITIONTIME,
                                   g_param_spec_boolean("useExpositionTime", "UseExpositionTime", "enable/disable exposition time usage",
                                                        TRUE, G_PARAM_READWRITE));
+  g_object_class_install_property(gobject_class, PROP_USEHISTOGRAM,
+                                  g_param_spec_boolean("useHistogram", "UseHistogram", "enable/disable exposition time usage",
+                                                       TRUE, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_OPTIMIZE,
                                   g_param_spec_int("optimize", "Optimize", "Optimization level", 0, 5, 0, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_LOWERBOUND,
@@ -160,7 +165,14 @@ gst_autoexposure_class_init(GstautoexposureClass *klass)
   g_object_class_install_property(gobject_class, PROP_MAXEXPOSITION,
                                   g_param_spec_int("maxexposition", "Maxexposition", "maximum exposition tolerate",
                                                    5, 200000, 5, G_PARAM_READWRITE));
-  gst_element_class_set_details_simple(gstelement_class,
+  
+
+g_object_class_install_property(gobject_class, PROP_MAXEXPOSITION,
+                                    g_param_spec_pointer ("histogram", "Histogram",
+                                                          "Histogram pointer",
+                                                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+
+gst_element_class_set_details_simple(gstelement_class,
                                        "autoexposure",
                                        "FIXME:Generic",
                                        "FIXME:Generic Template Element",
@@ -204,6 +216,8 @@ gst_autoexposure_init(Gstautoexposure *filter)
   filter->ROI1y = 0;
   filter->ROI2x = 1920;
   filter->ROI2y = 1080;
+  filter->useHistogram = FALSE;
+
 
   initialization("/dev/video0", 2);
 }
@@ -224,6 +238,9 @@ gst_autoexposure_set_property(GObject *object, guint prop_id,
     break;
   case PROP_USEEXPOSITIONTIME:
     filter->useExpositionTime = g_value_get_boolean(value);
+    break;
+  case PROP_USEHISTOGRAM:
+    filter->useHistogram = g_value_get_boolean(value);
     break;
   case PROP_OPTIMIZE:
     filter->optimize = g_value_get_int(value);
@@ -275,6 +292,9 @@ gst_autoexposure_get_property(GObject *object, guint prop_id,
   case PROP_USEEXPOSITIONTIME:
     g_value_set_boolean(value, filter->useExpositionTime);
     break;
+  case PROP_USEHISTOGRAM:
+    g_value_set_boolean(value, filter->useHistogram);
+    break;
   case PROP_OPTIMIZE:
     g_value_set_int(value, filter->optimize);
     break;
@@ -301,6 +321,9 @@ gst_autoexposure_get_property(GObject *object, guint prop_id,
     break;
   case PROP_ROI2Y:
     g_value_set_int(value, filter->ROI2y);
+    break;
+  case PROP_HISTOGRAM:
+    g_value_set_pointer(value, filter->histogram);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -346,6 +369,27 @@ gst_autoexposure_sink_event(GstPad *pad, GstObject *parent, GstEvent *event)
 /* chain function
  * this function does the actual processing
  */
+double valeur_moyenne(int histo[], int taille)
+{
+  long int somme = 0;
+  int nb_elements = 0;
+
+  for (int i = 0; i < taille; i++)
+  {
+    somme += (long int)histo[i] * i;
+    nb_elements += histo[i];
+  }
+
+  if (nb_elements == 0)
+  {
+    return 0.0;
+  }
+  else
+  {
+    return (double)somme / nb_elements;
+  }
+}
+
 static GstFlowReturn
 gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
 {
@@ -369,37 +413,70 @@ gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
     g_print("could not get snapshot dimension\n");
     exit(-1);
   }
-
-  if (filter->work)
+if (filter->work)
+    {
+  if (!filter->useHistogram)
   {
 
-    int tmp_mean;
-    float global_mean = 0;
+
+      int tmp_mean;
+      float global_mean = 0;
+      for (int y = filter->ROI1y; y < filter->ROI2y; y += 1 + filter->optimize)
+      {
+        tmp_mean = 0;
+        for (int x = filter->ROI1x; x < filter->ROI2x; x += 1 + filter->optimize)
+        {
+          tmp_mean += map.data[(y * width) + x];
+        }
+        global_mean += (tmp_mean * (1 + filter->optimize)) / ((float)width);
+      }
+      global_mean = (global_mean * (1 + filter->optimize)) / (height);
+
+      g_print("global_mean : %f\n", global_mean);
+      if (filter->useExpositionTime)
+      {
+        algorithm_with_exposition_v3(global_mean, filter->maxexposition, filter->latency, filter->lowerbound, filter->upperbound);
+      }
+      else
+      {
+        algorithm_without_exposition_v2(global_mean, filter->latency, filter->lowerbound, filter->upperbound);
+      }
+    
+  }
+  else
+  {
+    int hist[256];
+	for(int i=0;i<256;i++)
+{
+hist[i]=0;
+}    
+
+
+
     for (int y = filter->ROI1y; y < filter->ROI2y; y += 1 + filter->optimize)
     {
-      tmp_mean = 0;
       for (int x = filter->ROI1x; x < filter->ROI2x; x += 1 + filter->optimize)
       {
-        tmp_mean += map.data[(y * width) + x];
+        hist[map.data[(y * width) + x]] += 1;
       }
-      global_mean += (tmp_mean * (1 + filter->optimize)) / ((float)width);
     }
-    global_mean = (global_mean * (1 + filter->optimize)) / (height);
-
-    g_print("global_mean : %f\n", global_mean);
+	
+    int global_mean=valeur_moyenne(hist, 256);
     if (filter->useExpositionTime)
-    {
-      algorithm_with_exposition_v3(global_mean, filter->maxexposition, filter->latency, filter->lowerbound, filter->upperbound);
-    }
-    else
-    {
-      algorithm_without_exposition_v2(global_mean, filter->latency, filter->lowerbound, filter->upperbound);
-    }
+      {
+        algorithm_with_exposition_v3(global_mean, filter->maxexposition, filter->latency, filter->lowerbound, filter->upperbound);
+      }
+      else
+      {
+        algorithm_without_exposition_v2(global_mean, filter->latency, filter->lowerbound, filter->upperbound);
+      }
   }
+}
 
-  gst_buffer_unmap(buf, &map);
 
-  return gst_pad_push(filter->srcpad, buf);
+gst_buffer_unmap(buf, &map);
+
+return gst_pad_push(filter->srcpad, buf);
 }
 
 static void gst_autoexposure_finalize(GObject *object)
