@@ -149,13 +149,13 @@ gst_autoexposure_class_init(GstautoexposureClass *klass)
                                   g_param_spec_int("latency", "Latency", "pipeline latency", 0, 100, 4, G_PARAM_READWRITE));
 
   g_object_class_install_property(gobject_class, PROP_ROI1X,
-                                  g_param_spec_int("latency", "Latency", "pipeline latency", 0, 1920, 0, G_PARAM_READWRITE));
+                                  g_param_spec_int("roi1x", "Roi1x", "Roi coordinates", 0, 1920, 0, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_ROI1Y,
-                                  g_param_spec_int("latency", "Latency", "pipeline latency", 0, 1080, 0, G_PARAM_READWRITE));
+                                  g_param_spec_int("roi1y", "Roi1y", "Roi coordinates", 0, 1080, 0, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_ROI2X,
-                                  g_param_spec_int("latency", "Latency", "pipeline latency", 0, 1920, 1920, G_PARAM_READWRITE));
+                                  g_param_spec_int("roi2x", "Roi2x", "Roi coordinates", 0, 1920, 1920, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_ROI2Y,
-                                  g_param_spec_int("latency", "Latency", "pipeline latency", 0, 1080, 1080, G_PARAM_READWRITE));
+                                  g_param_spec_int("roi2y", "Roi2y", "Roi coordinates", 0, 1080, 1080, G_PARAM_READWRITE));
 
   g_object_class_install_property(gobject_class, PROP_MAXEXPOSITION,
                                   g_param_spec_int("maxexposition", "Maxexposition", "maximum exposition tolerate",
