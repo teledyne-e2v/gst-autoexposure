@@ -88,8 +88,8 @@ enum
   PROP_ROI1Y,
   PROP_ROI2X,
   PROP_ROI2Y,
-  PROP_USEHISTOGRAM,
-  PROP_HISTOGRAM
+  PROP_USEHISTOGRAM/*,
+  PROP_HISTOGRAM*/
 };
 
 /* the capabilities of the inputs and outputs.
@@ -143,7 +143,7 @@ gst_autoexposure_class_init(GstautoexposureClass *klass)
                                                        TRUE, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_USEHISTOGRAM,
                                   g_param_spec_boolean("useHistogram", "UseHistogram", "enable/disable exposition time usage",
-                                                       TRUE, G_PARAM_READWRITE));
+                                                       FALSE, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_OPTIMIZE,
                                   g_param_spec_int("optimize", "Optimize", "Optimization level", 0, 5, 0, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_LOWERBOUND,
@@ -166,11 +166,11 @@ gst_autoexposure_class_init(GstautoexposureClass *klass)
                                   g_param_spec_int("maxexposition", "Maxexposition", "maximum exposition tolerate",
                                                    5, 200000, 5, G_PARAM_READWRITE));
   
-
+/*
 g_object_class_install_property(gobject_class, PROP_MAXEXPOSITION,
                                     g_param_spec_pointer ("histogram", "Histogram",
                                                           "Histogram pointer",
-                                                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+                                                          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));*/
 
 gst_element_class_set_details_simple(gstelement_class,
                                        "autoexposure",
@@ -321,10 +321,10 @@ gst_autoexposure_get_property(GObject *object, guint prop_id,
     break;
   case PROP_ROI2Y:
     g_value_set_int(value, filter->ROI2y);
-    break;
+    break;/*
   case PROP_HISTOGRAM:
     g_value_set_pointer(value, filter->histogram);
-    break;
+    break;*/
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
     break;
@@ -428,9 +428,9 @@ if (filter->work)
         {
           tmp_mean += map.data[(y * width) + x];
         }
-        global_mean += (tmp_mean * (1 + filter->optimize)) / ((float)width);
+        global_mean += (tmp_mean * (1 + filter->optimize)) / ((float)filter->ROI2x-filter->ROI1x);
       }
-      global_mean = (global_mean * (1 + filter->optimize)) / (height);
+      global_mean = (global_mean * (1 + filter->optimize)) / ((float)filter->ROI2y-filter->ROI1y);
 
       g_print("global_mean : %f\n", global_mean);
       if (filter->useExpositionTime)
