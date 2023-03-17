@@ -33,12 +33,12 @@ void algorithm_without_exposition(float global_mean)
 	}
 }
 
-void algorithm_without_exposition_v2(float global_mean, int latency,int lowerbound, int upperbound)
+void algorithm_without_exposition_v2(float global_mean, int latency, int lowerbound, int upperbound)
 {
 	int gain = get_control("analog_gain");
 	int max_gain = get_control_max("analog_gain");
 	int newGain;
-	int interbound=(upperbound+lowerbound)/2;
+	int interbound = (upperbound + lowerbound) / 2;
 	int calc = (log10(interbound) + 0.09 * gain - log10(global_mean)) / 0.07;
 	printf(" calc : %d\nproc = %d\n", calc, proc_once2);
 	if (proc_once2 == 0)
@@ -66,7 +66,7 @@ void algorithm_without_exposition_v2(float global_mean, int latency,int lowerbou
 	}
 }
 
-void algorithm_with_exposition_v3(float global_mean, int maxExp, int latency,int lowerbound, int upperbound)
+void algorithm_with_exposition_v3(float global_mean, int maxExp, int latency, int lowerbound, int upperbound)
 {
 	int exp1 = get_control("exposure");
 	float delta = maxExp / exp1;
@@ -84,19 +84,19 @@ void algorithm_with_exposition_v3(float global_mean, int maxExp, int latency,int
 		else
 		{
 			set_control("exposure", maxExp);
-			algorithm_without_exposition_v2(delta * global_mean, latency,lowerbound,upperbound);
+			algorithm_without_exposition_v2(delta * global_mean, latency, lowerbound, upperbound);
 		}
 	}
 	else if (global_mean < lowerbound && proc_Once > latency)
 	{
-		algorithm_without_exposition_v2(global_mean, latency,lowerbound,upperbound);
+		algorithm_without_exposition_v2(global_mean, latency, lowerbound, upperbound);
 	}
 	else if (global_mean > upperbound)
 	{
 
 		if (gain > 0)
 		{
-			algorithm_without_exposition_v2(global_mean, latency,lowerbound,upperbound);
+			algorithm_without_exposition_v2(global_mean, latency, lowerbound, upperbound);
 		}
 		else if (proc_Once == 0)
 		{
@@ -114,7 +114,6 @@ void algorithm_with_exposition_v3(float global_mean, int maxExp, int latency,int
 		proc_Once = 0;
 	}
 }
-
 
 void algorithm_with_exposition_v2(float global_mean, int maxExp)
 {

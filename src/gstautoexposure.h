@@ -87,7 +87,7 @@ struct _Gstautoexposure
   gint ROI2y;
   gboolean useExpositionTime;
   gboolean useHistogram;
-  gint* histogram;
+  gint *histogram;
 };
 
 struct _GstautoexposureClass
