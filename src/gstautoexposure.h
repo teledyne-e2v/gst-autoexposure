@@ -79,8 +79,7 @@ struct _Gstautoexposure
   gint optimize;
   gint maxexposition;
   gint latency;
-  gint lowerbound;
-  gint upperbound;
+  gint target;
   gint ROI1x;
   gint ROI1y;
   gint ROI2x;

@@ -2,7 +2,7 @@
 #include "math.h"
 
 
-int algorithm_digital_gain(int target, int global_mean, int digital_gain)
+int algorithm_digital_gain(int target, float global_mean, int digital_gain)
 {
 	int new_digital_gain = digital_gain * (target/(float)global_mean); // digital gain we should set to get the targeted mean	
 	if(new_digital_gain < 256) // 256 is select as min because if the digital gain is < 256 the image will be grayed out
@@ -22,7 +22,7 @@ int algorithm_digital_gain(int target, int global_mean, int digital_gain)
 	return 0;
 }
 
-int algorithm_analog_gain(int target, int global_mean, int analog_gain)
+int algorithm_analog_gain(int target, float global_mean, int analog_gain)
 {
 	int new_analog_gain = (log10(target) + 0.09 * analog_gain - log10(global_mean)) / 0.07; // analog gain we should set to get the targeted mean
 
@@ -45,7 +45,7 @@ int algorithm_analog_gain(int target, int global_mean, int analog_gain)
 	return 0;
 }
 
-void algorithm_without_exposition(int global_mean, int latency, int target)
+void algorithm_without_exposition(float global_mean, int latency, int target)
 {
 
 	int analog_gain = get_control("analog_gain");
@@ -90,7 +90,7 @@ void algorithm_with_exposition(float global_mean, int maxExp, int latency, int t
 	float delta = maxExp / exp1;
 	float x = 70 / global_mean;
 	int gain = get_control("analog_gain");
-	if (global_mean < lowerbound && (proc_Once == 0 || exp1 != maxExp))
+	if (global_mean < target - 5 && (proc_Once == 0 || exp1 != maxExp))
 	{
 		proc_Once = 1;
 		if (x < delta)
@@ -104,16 +104,16 @@ void algorithm_with_exposition(float global_mean, int maxExp, int latency, int t
 			algorithm_without_exposition(delta * global_mean, latency, target );
 		}
 	}
-	else if (global_mean < lowerbound && proc_Once > latency)
+	else if (global_mean < target - 5 && proc_Once > latency)
 	{
 		algorithm_without_exposition(delta * global_mean, latency, target);
 	}
-	else if (global_mean > upperbound)
+	else if (global_mean > target + 5)
 	{
 
 		if (gain > 0)
 		{
-			algorithm_without_exposition(delta * global_mean, latency, target );
+			algorithm_without_exposition(delta * global_mean, latency, target);
 		}
 		else if (proc_Once == 0)
 		{

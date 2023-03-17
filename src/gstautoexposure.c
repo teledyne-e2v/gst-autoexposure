@@ -240,7 +240,7 @@ gst_autoexposure_set_property(GObject *object, guint prop_id,
   case PROP_OPTIMIZE:
     filter->optimize = g_value_get_int(value);
     break;
-  case PROP_target:
+  case PROP_TARGET:
     filter->target = g_value_get_int(value);
     break;
 
@@ -259,7 +259,7 @@ gst_autoexposure_set_property(GObject *object, guint prop_id,
   case PROP_ROI2X:
     filter->ROI2x = g_value_get_int(value);
     break;
-  case PROP_ROI2Y:upper
+  case PROP_ROI2Y:
     filter->ROI2y = g_value_get_int(value);
     break;
   default:
