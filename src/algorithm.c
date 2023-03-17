@@ -1,71 +1,5 @@
 #include "algorithm.h"
 #include "math.h"
-void algorithm_without_exposition(float global_mean)
-{
-
-	if (global_mean < 50)
-	{
-		int gain = get_control("analog_gain");
-		if (gain == get_control_max("analog_gain"))
-		{
-			int gain_d = get_control("digital_gain");
-			set_control("digital_gain", gain_d + 20);
-		}
-		else
-		{
-			set_control("analog_gain", gain + 1);
-		}
-	}
-	else if (global_mean > 110)
-	{
-
-		int gain = get_control("digital_gain");
-		if (gain == get_control_default("digital_gain"))
-		{
-
-			int gain_a = get_control("analog_gain");
-			set_control("analog_gain", gain_a - 1);
-		}
-		else
-		{
-			set_control("digital_gain", gain - 20);
-		}
-	}
-}
-
-void algorithm_without_exposition_v2(float global_mean, int latency, int lowerbound, int upperbound)
-{
-	int gain = get_control("analog_gain");
-	int max_gain = get_control_max("analog_gain");
-	int newGain;
-	int interbound = (upperbound + lowerbound) / 2;
-	int calc = (log10(interbound) + 0.09 * gain - log10(global_mean)) / 0.07;
-	printf(" calc : %d\nproc = %d\n", calc, proc_once2);
-	if (proc_once2 == 0)
-	{
-		printf("im ininnn\n");
-		if (calc < max_gain)
-		{
-			newGain = calc;
-		}
-		else
-		{
-			newGain = max_gain;
-		}
-		set_control("analog_gain", newGain);
-		proc_once2 = 1;
-	}
-	if (proc_once2 > 0)
-	{
-		proc_once2++;
-	}
-
-	if (proc_once2 > latency && (global_mean > upperbound || global_mean < lowerbound))
-	{
-		proc_once2 = 0;
-	}
-}
-
 
 
 int algorithm_digital_gain(int target, int global_mean, int digital_gain)
@@ -111,7 +45,7 @@ int algorithm_analog_gain(int target, int global_mean, int analog_gain)
 	return 0;
 }
 
-void algorithm_without_exposition_v3(int global_mean, int latency, int target)
+void algorithm_without_exposition(int global_mean, int latency, int target)
 {
 
 	int analog_gain = get_control("analog_gain");
@@ -151,7 +85,7 @@ void algorithm_without_exposition_v3(int global_mean, int latency, int target)
 
 
 
-void algorithm_with_exposition_v3(float global_mean, int maxExp, int latency, int lowerbound, int upperbound)
+void algorithm_with_exposition(float global_mean, int maxExp, int latency, int target)
 {
 	int exp1 = get_control("exposure");
 	float delta = maxExp / exp1;
@@ -169,19 +103,19 @@ void algorithm_with_exposition_v3(float global_mean, int maxExp, int latency, in
 		else
 		{
 			set_control("exposure", maxExp);
-			algorithm_without_exposition_v3(delta * global_mean, latency, (upperbound + lowerbound)/2 );
+			algorithm_without_exposition(delta * global_mean, latency, (upperbound + lowerbound)/2 );
 		}
 	}
 	else if (global_mean < lowerbound && proc_Once > latency)
 	{
-		algorithm_without_exposition_v3(delta * global_mean, latency, (upperbound + lowerbound)/2 );
+		algorithm_without_exposition(delta * global_mean, latency, (upperbound + lowerbound)/2 );
 	}
 	else if (global_mean > upperbound)
 	{
 
 		if (gain > 0)
 		{
-			algorithm_without_exposition_v3(delta * global_mean, latency, (upperbound + lowerbound)/2 );
+			algorithm_without_exposition(delta * global_mean, latency, (upperbound + lowerbound)/2 );
 		}
 		else if (proc_Once == 0)
 		{
@@ -197,117 +131,5 @@ void algorithm_with_exposition_v3(float global_mean, int maxExp, int latency, in
 	if (proc_Once > latency && gain == 0 && (global_mean > upperbound || global_mean < lowerbound))
 	{
 		proc_Once = 0;
-	}
-}
-
-void algorithm_with_exposition_v2(float global_mean, int maxExp)
-{
-
-	if (global_mean < 50)
-	{
-		int gain = get_control("analog_gain");
-		if (gain == get_control_max("analog_gain"))
-		{
-			int gain_d = get_control("digital_gain");
-			set_control("digital_gain", gain_d + 20);
-		}
-		else
-		{
-			set_control("analog_gain", gain + 1);
-		}
-	}
-	else if (global_mean > 110)
-	{
-		int gain = get_control("digital_gain");
-		int exp1 = get_control("exposure");
-		int gain_a = get_control("analog_gain");
-		if (gain != get_control_default("digital_gain"))
-		{
-			set_control("digital_gain", gain - 20);
-		}
-		else if (gain_a != get_control_min("analog_gain"))
-		{
-			set_control("analog_gain", gain_a - 1);
-		}
-		else
-		{
-			set_control("exposure", exp1 - 1000);
-		}
-	}
-	else if (proc_Once == 0)
-	{
-		proc_Once = 1;
-		int exp1 = get_control("exposure");
-		int exp2 = maxExp;
-		int delta = exp2 - exp1;
-		int gain = get_control("analog_gain");
-		int newExp;
-		int newGain;
-		printf("%f\n", exp1 * exp((float)(gain - 3) * 0.1662) * 2.5837);
-		if (exp1 * exp((float)(gain - 3) * 0.1662) * 2.5837 > delta)
-		{
-
-			newExp = exp2;
-			newGain = gain - 3 - log(delta / (2.5837 * exp1)) / 0.1662; //(float(gain)*0.1662)
-		}
-		else
-		{
-			newExp = exp1 * exp((float)(gain - 3) * 0.1662) * 2.5837 - exp1;
-			newGain = 0;
-		}
-		set_control("exposure", newExp);
-		set_control("analog_gain", newGain - 1);
-	}
-
-	if (proc_Once != 0)
-	{
-		proc_Once += 1;
-	}
-
-	if (proc_Once >= 10 && (global_mean < 50 /*|| global_mean>110*/))
-	{
-		proc_Once = 0;
-	}
-}
-
-void algorithm_with_exposition(float global_mean, int maxExp)
-{
-
-	if (global_mean < 50)
-	{
-		int exp1 = get_control("exposure");
-		int gain = get_control("analog_gain");
-		int gain_d = get_control("digital_gain");
-		if (exp1 > maxExp && get_control_max("exposure") != exp1)
-		{
-			printf("exp %d\n", exp1);
-			set_control("exposure", exp1 + 5000);
-		}
-		else if (gain != get_control_max("analog_gain"))
-		{
-			set_control("analog_gain", gain + 1);
-		}
-		else
-		{
-			set_control("digital_gain", gain_d + 20);
-		}
-	}
-	else if (global_mean > 110)
-	{
-		int gain = get_control("digital_gain");
-		int exp1 = get_control("exposure");
-		int gain_a = get_control("analog_gain");
-		if (gain != get_control_default("digital_gain"))
-		{
-			set_control("digital_gain", gain - 20);
-		}
-		else if (gain_a != get_control_min("analog_gain"))
-		{
-			set_control("analog_gain", gain_a - 1);
-		}
-		else
-		{
-			set_control("exposure", exp1 - 1000);
-		}
 	}
 }

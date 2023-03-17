@@ -82,8 +82,7 @@ enum
   PROP_MAXEXPOSITION,
   PROP_USEEXPOSITIONTIME,
   PROP_LATENCY,
-  PROP_LOWERBOUND,
-  PROP_UPPERBOUND,
+  PROP_TARGET,
   PROP_ROI1X,
   PROP_ROI1Y,
   PROP_ROI2X,
@@ -146,10 +145,8 @@ gst_autoexposure_class_init(GstautoexposureClass *klass)
                                                        FALSE, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_OPTIMIZE,
                                   g_param_spec_int("optimize", "Optimize", "Optimization level", 0, 5, 0, G_PARAM_READWRITE));
-  g_object_class_install_property(gobject_class, PROP_LOWERBOUND,
-                                  g_param_spec_int("lowerbound", "Lowerbound", "lower bound of the algorithm", 0, 254, 50, G_PARAM_READWRITE));
-  g_object_class_install_property(gobject_class, PROP_UPPERBOUND,
-                                  g_param_spec_int("upperbound", "Upperbound", "upper bound of the algorithm", 1, 255, 110, G_PARAM_READWRITE));
+  g_object_class_install_property(gobject_class, PROP_TARGET,
+                                  g_param_spec_int("target", "Target", "Targeted mean of the image", 0, 255, 50, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_LATENCY,
                                   g_param_spec_int("latency", "Latency", "pipeline latency", 0, 100, 4, G_PARAM_READWRITE));
 
@@ -210,8 +207,7 @@ gst_autoexposure_init(Gstautoexposure *filter)
   filter->maxexposition = 30000;
   filter->useExpositionTime = TRUE;
   filter->latency = 4;
-  filter->lowerbound = 50;
-  filter->upperbound = 110;
+  filter->target = 60;
   filter->ROI1x = 0;
   filter->ROI1y = 0;
   filter->ROI2x = 1920;
@@ -244,12 +240,10 @@ gst_autoexposure_set_property(GObject *object, guint prop_id,
   case PROP_OPTIMIZE:
     filter->optimize = g_value_get_int(value);
     break;
-  case PROP_UPPERBOUND:
-    filter->upperbound = g_value_get_int(value);
+  case PROP_target:
+    filter->target = g_value_get_int(value);
     break;
-  case PROP_LOWERBOUND:
-    filter->lowerbound = g_value_get_int(value);
-    break;
+
   case PROP_MAXEXPOSITION:
     filter->maxexposition = g_value_get_int(value);
     break;
@@ -265,7 +259,7 @@ gst_autoexposure_set_property(GObject *object, guint prop_id,
   case PROP_ROI2X:
     filter->ROI2x = g_value_get_int(value);
     break;
-  case PROP_ROI2Y:
+  case PROP_ROI2Y:upper
     filter->ROI2y = g_value_get_int(value);
     break;
   default:
@@ -297,11 +291,8 @@ gst_autoexposure_get_property(GObject *object, guint prop_id,
   case PROP_OPTIMIZE:
     g_value_set_int(value, filter->optimize);
     break;
-  case PROP_UPPERBOUND:
-    g_value_set_int(value, filter->upperbound);
-    break;
-  case PROP_LOWERBOUND:
-    g_value_set_int(value, filter->lowerbound);
+  case PROP_TARGET:
+    g_value_set_int(value, filter->target);
     break;
   case PROP_LATENCY:
     g_value_set_int(value, filter->latency);
@@ -433,11 +424,11 @@ gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
       g_print("global_mean : %f\n", global_mean);
       if (filter->useExpositionTime)
       {
-        algorithm_with_exposition_v3(global_mean, filter->maxexposition, filter->latency, filter->lowerbound, filter->upperbound);
+        algorithm_with_exposition(global_mean, filter->maxexposition, filter->latency, filter->target);
       }
       else
       {
-        algorithm_without_exposition_v2(global_mean, filter->latency, filter->lowerbound, filter->upperbound);
+        algorithm_without_exposition(global_mean, filter->latency, filter->target);
       }
     }
     else
@@ -459,11 +450,11 @@ gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
       int global_mean = valeur_moyenne(hist, 256);
       if (filter->useExpositionTime)
       {
-        algorithm_with_exposition_v3(global_mean, filter->maxexposition, filter->latency, filter->lowerbound, filter->upperbound);
+        algorithm_with_exposition(global_mean, filter->maxexposition, filter->latency, filter->target);
       }
       else
       {
-        algorithm_without_exposition_v2(global_mean, filter->latency, filter->lowerbound, filter->upperbound);
+        algorithm_without_exposition(global_mean, filter->latency, filter->target);
       }
     }
   }
