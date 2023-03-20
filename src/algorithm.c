@@ -19,7 +19,7 @@ int algorithm_digital_gain(int target, float global_mean, int digital_gain)
 	{
 		set_control("digital_gain", new_digital_gain);
 	}
-	return 0;
+	return global_mean;
 }
 
 int algorithm_analog_gain(int target, float global_mean, int max_analog_gain)
@@ -42,34 +42,39 @@ int algorithm_analog_gain(int target, float global_mean, int max_analog_gain)
 	{
 		set_control("analog_gain", new_analog_gain);
 	}
-	return 0;
+	return global_mean;
 }
 
 int algorithm_without_exposition(float global_mean, int latency, int target, int max_analog_gain, bool toggle_digital_gain)
 {	
 	int digital_gain = get_control("digital_gain");
+int expected=global_mean;
 	if (proc_once2 == 0)
 	{
 		if(target > global_mean) // if the targeted mean is greater than the global mean, we start to change the analogic gain (because he should produce less noise than digital gain) 
 		{
-			int expected = algorithm_analog_gain(target,global_mean,max_analog_gain); 
+			 expected = algorithm_analog_gain(target,global_mean,max_analog_gain); 
 
-			if(expected != 0 && toggle_digital_gain)
+			if(expected != global_mean && toggle_digital_gain)
 			{
-				algorithm_digital_gain(target,expected,digital_gain);
+				expected=algorithm_digital_gain(target,expected,digital_gain);
 			}
 		}
 		else  // if the targeted mean is lower than the global mean, we start to change the digital gain (to minimize the noise)
 		{
-			int expected = 0;
 			if(toggle_digital_gain)
 			{
 				expected = algorithm_digital_gain(target,global_mean,digital_gain);
+				if(expected != global_mean || !toggle_digital_gain)
+				{
+					expected=algorithm_analog_gain(target,expected,max_analog_gain);
+				}
 			}
-			if(expected != 0 || !toggle_digital_gain)
+			else 
 			{
-				algorithm_analog_gain(target,expected,max_analog_gain);
+				expected=algorithm_analog_gain(target,expected,max_analog_gain);
 			}
+			
 		}
 		proc_once2 = 1;
 	}
@@ -82,7 +87,7 @@ int algorithm_without_exposition(float global_mean, int latency, int target, int
 	{
 		proc_once2 = 0;
 	}
-	return 0;
+	return expected;
 }
 
 
@@ -107,7 +112,7 @@ int algorithm_exposition(int target, float global_mean, int max_exposition)
 	{
 		set_control("exposure", new_exposition);
 	}
-	return 0;
+	return global_mean;
 }
 
 
@@ -120,17 +125,18 @@ void algorithm_with_exposition(float global_mean, int latency, int target, int m
 		{
 			int expected = algorithm_exposition(target,global_mean,max_exposition); 
 
-			if(expected != 0)
+			if(expected != global_mean)
 			{
-				algorithm_without_exposition(expected,latency,target, max_analog_gain, toggle_digital_gain);
+				expected=algorithm_without_exposition(expected,latency,target, max_analog_gain, toggle_digital_gain);
 			}
 		}
 		else  // if the targeted mean is lower than the global mean, we start to change the digital gain (to minimize the noise)
 		{
 			int expected = algorithm_without_exposition(global_mean,latency,target, max_analog_gain, toggle_digital_gain);
-			if(expected != 0)
+			printf("expected deacresed : %d\n",expected);
+			if(expected != global_mean)
 			{
-				algorithm_exposition(target,expected,max_exposition);
+				expected=algorithm_exposition(target,expected,max_exposition);
 			}
 		}
 		proc_Once = 1;
