@@ -104,9 +104,8 @@ int algorithm_exposition(int target, float global_mean, int max_exposition)
 	}
 	else if(new_exposition > max_exposition) // set exposition to maximum and return expected mean (with max exposition)
 	{
-		new_exposition = max_exposition;
-		set_control("exposure", new_exposition);
-		return new_exposition * (global_mean /(float) exposition); 
+		set_control("exposure", max_exposition);
+		return max_exposition * (global_mean /(float) exposition); 
 	}
 	else // set exposition to the calculated exposition (expect global mean to be close to target)
 	{

@@ -206,7 +206,7 @@ gst_autoexposure_init(Gstautoexposure *filter)
   filter->silent = FALSE;
   filter->work = TRUE;
   filter->optimize = 0;
-  filter->maxExposition = 30000;
+  filter->maxExposition = 20000;
   filter->useExpositionTime = TRUE;
   filter->latency = 4;
   filter->target = 60;
