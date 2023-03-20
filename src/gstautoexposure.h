@@ -77,7 +77,7 @@ struct _Gstautoexposure
   gboolean silent;
   gboolean work;
   gint optimize;
-  gint maxexposition;
+  gint maxExposition;
   gint latency;
   gint target;
   gint ROI1x;

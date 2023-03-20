@@ -80,6 +80,8 @@ enum
   PROP_WORK,
   PROP_OPTIMIZE,
   PROP_MAXEXPOSITION,
+  PROP_MAXANALOGGAIN,
+  PROP_USEDIGITALGAIN,
   PROP_USEEXPOSITIONTIME,
   PROP_LATENCY,
   PROP_TARGET,
@@ -160,14 +162,14 @@ gst_autoexposure_class_init(GstautoexposureClass *klass)
                                   g_param_spec_int("roi2y", "Roi2y", "Roi coordinates", 0, 1080, 1080, G_PARAM_READWRITE));
 
   g_object_class_install_property(gobject_class, PROP_MAXEXPOSITION,
-                                  g_param_spec_int("maxexposition", "Maxexposition", "maximum exposition tolerate",
+                                  g_param_spec_int("maxExposition", "MaxExposition", "maximum exposition tolerate",
                                                    5, 200000, 5, G_PARAM_READWRITE));
-
-  /*
-  g_object_class_install_property(gobject_class, PROP_MAXEXPOSITION,
-                                      g_param_spec_pointer ("histogram", "Histogram",
-                                                            "Histogram pointer",
-                                                            G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));*/
+g_object_class_install_property(gobject_class, PROP_MAXANALOGGAIN,
+                                  g_param_spec_int("maxAnalogGain", "MaxAnalogGain", "maximum analog gain tolerate",
+                                                   0, 15, 15, G_PARAM_READWRITE));
+  g_object_class_install_property(gobject_class, PROP_USEDIGITALGAIN,
+                                  g_param_spec_boolean("useDigitalGain", "UseDigitalGain", "enable/disable digital gain usage",
+                                                       FALSE, G_PARAM_READWRITE));
 
   gst_element_class_set_details_simple(gstelement_class,
                                        "autoexposure",
@@ -204,7 +206,7 @@ gst_autoexposure_init(Gstautoexposure *filter)
   filter->silent = FALSE;
   filter->work = TRUE;
   filter->optimize = 0;
-  filter->maxexposition = 30000;
+  filter->maxExposition = 30000;
   filter->useExpositionTime = TRUE;
   filter->latency = 4;
   filter->target = 60;
@@ -213,7 +215,8 @@ gst_autoexposure_init(Gstautoexposure *filter)
   filter->ROI2x = 1920;
   filter->ROI2y = 1080;
   filter->useHistogram = FALSE;
-
+  filter->maxAnalogGain = 15;
+  filter->useDigitalGain = TRUE;
   initialization("/dev/video0", 2);
 }
 
@@ -243,9 +246,14 @@ gst_autoexposure_set_property(GObject *object, guint prop_id,
   case PROP_TARGET:
     filter->target = g_value_get_int(value);
     break;
-
+  case PROP_USEDIGITALGAIN:
+    filter->useDigitalGain = g_value_get_boolean(value);
+    break;
   case PROP_MAXEXPOSITION:
-    filter->maxexposition = g_value_get_int(value);
+    filter->maxExposition = g_value_get_int(value);
+    break;
+  case PROP_MAXANALOGGAIN:
+    filter->maxAnalogGain = g_value_get_int(value);
     break;
   case PROP_LATENCY:
     filter->latency = g_value_get_int(value);
@@ -298,7 +306,10 @@ gst_autoexposure_get_property(GObject *object, guint prop_id,
     g_value_set_int(value, filter->latency);
     break;
   case PROP_MAXEXPOSITION:
-    g_value_set_int(value, filter->maxexposition);
+    g_value_set_int(value, filter->maxExposition);
+    break;
+  case PROP_MAXANALOGGAIN:
+    g_value_set_int(value, filter->maxAnalogGain);
     break;
   case PROP_ROI1X:
     g_value_set_int(value, filter->ROI1x);
@@ -424,11 +435,11 @@ gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
       g_print("global_mean : %f\n", global_mean);
       if (filter->useExpositionTime)
       {
-        algorithm_with_exposition(global_mean, filter->maxexposition, filter->latency, filter->target);
+        algorithm_with_exposition(global_mean, filter->latency,  filter->target,  filter->maxExposition, filter->maxAnalogGain, filter->useDigitalGain);
       }
       else
       {
-        algorithm_without_exposition(global_mean, filter->latency, filter->target);
+        algorithm_without_exposition(global_mean, filter->latency, filter->target, filter->maxAnalogGain, filter->useDigitalGain);
       }
     }
     else
@@ -450,11 +461,11 @@ gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
       int global_mean = valeur_moyenne(hist, 256);
       if (filter->useExpositionTime)
       {
-        algorithm_with_exposition(global_mean, filter->maxexposition, filter->latency, filter->target);
+        algorithm_with_exposition(global_mean, filter->latency,  filter->target,  filter->maxExposition, filter->maxAnalogGain, filter->useDigitalGain);
       }
       else
       {
-        algorithm_without_exposition(global_mean, filter->latency, filter->target);
+        algorithm_without_exposition(global_mean, filter->latency, filter->target, filter->maxAnalogGain, filter->useDigitalGain);
       }
     }
   }
