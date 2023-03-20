@@ -87,6 +87,8 @@ struct _Gstautoexposure
   gboolean useExpositionTime;
   gboolean useHistogram;
   gint *histogram;
+  gint maxAnalogGain;
+  gboolean useDigitalGain;
 };
 
 struct _GstautoexposureClass
