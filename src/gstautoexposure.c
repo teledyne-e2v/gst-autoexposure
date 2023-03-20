@@ -293,6 +293,9 @@ gst_autoexposure_get_property(GObject *object, guint prop_id,
   case PROP_USEEXPOSITIONTIME:
     g_value_set_boolean(value, filter->useExpositionTime);
     break;
+  case PROP_USEDIGITALGAIN:
+    g_value_set_boolean(value, filter->useDigitalGain);
+    break;
   case PROP_USEHISTOGRAM:
     g_value_set_boolean(value, filter->useHistogram);
     break;

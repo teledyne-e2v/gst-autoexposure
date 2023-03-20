@@ -88,24 +88,24 @@ int algorithm_without_exposition(float global_mean, int latency, int target, int
 
 int algorithm_exposition(int target, float global_mean, int max_exposition)
 {
-	int exposition = get_control("exposition");
+	int exposition = get_control("exposure");
 	int new_exposition = exposition * (target/(float)global_mean); // exposition we should set to get the targeted mean
 
-	if(new_exposition < get_control_min("exposition"))// set exposition to minimum and return expected mean (with a exposition of 0)
+	if(new_exposition < get_control_min("exposure"))// set exposition to minimum and return expected mean (with a exposition of 0)
 	{
-		new_exposition=get_control_min("exposition");
-		set_control("exposition", new_exposition);
+		new_exposition=get_control_min("exposure");
+		set_control("exposure", new_exposition);
 		return new_exposition * (global_mean /(float) exposition); 
 	}
 	else if(new_exposition > max_exposition) // set exposition to maximum and return expected mean (with max exposition)
 	{
 		new_exposition = max_exposition;
-		set_control("exposition", new_exposition);
+		set_control("exposure", new_exposition);
 		return new_exposition * (global_mean /(float) exposition); 
 	}
 	else // set exposition to the calculated exposition (expect global mean to be close to target)
 	{
-		set_control("exposition", new_exposition);
+		set_control("exposure", new_exposition);
 	}
 	return 0;
 }
