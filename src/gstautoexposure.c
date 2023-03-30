@@ -435,7 +435,7 @@ gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
       }
       global_mean = (global_mean * (1 + filter->optimize)) / ((float)filter->ROI2y - filter->ROI1y);
 
-      g_print("global_mean : %f\n", global_mean);
+
       if (filter->useExpositionTime)
       {
         algorithm_with_exposition(global_mean, filter->latency,  filter->target,  filter->maxExposition, filter->maxAnalogGain, filter->useDigitalGain);
@@ -444,7 +444,7 @@ gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
       {
         algorithm_without_exposition(global_mean, filter->latency, filter->target, filter->maxAnalogGain, filter->useDigitalGain);
       }
-    }
+    }/*
     else
     {
       int hist[256];
@@ -470,7 +470,7 @@ gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
       {
         algorithm_without_exposition(global_mean, filter->latency, filter->target, filter->maxAnalogGain, filter->useDigitalGain);
       }
-    }
+    }*/
   }
 
   gst_buffer_unmap(buf, &map);
