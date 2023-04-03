@@ -67,7 +67,7 @@ typedef struct _GstautoexposureClass GstautoexposureClass;
 
 static void gst_autoexposure_finalize(GObject *object);
 int init = 0;
-
+int proc_once=1;
 struct _Gstautoexposure
 {
   GstElement element;

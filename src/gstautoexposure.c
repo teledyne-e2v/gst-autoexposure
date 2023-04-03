@@ -59,10 +59,13 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#include <unistd.h>
 
+#include <stdio.h>
 #include <gst/gst.h>
 #include "gstautoexposure.h"
 #include "algorithm.h"
+
 GST_DEBUG_CATEGORY_STATIC(gst_autoexposure_debug);
 #define GST_CAT_DEFAULT gst_autoexposure_debug
 
@@ -92,6 +95,33 @@ enum
   PROP_USEHISTOGRAM /*,
    PROP_HISTOGRAM*/
 };
+
+
+void write_conf(int exposure, int analog_gain, int digital_gain) {
+    FILE *fichier = fopen("/tmp/exposure.txt", "w");
+    if (fichier == NULL) {
+        printf("Error : Can't open tmp file\n");
+        return;
+    }
+
+    fprintf(fichier, "%d %d %d", exposure, analog_gain, digital_gain);
+    fclose(fichier);
+}
+
+
+int read_conf(int *exposure, int *analog_gain, int *digital_gain) {
+    FILE *fichier = fopen("/tmp/exposure.txt", "r");
+    if (fichier == NULL) {
+        return 0;
+    }
+
+    fscanf(fichier, "%d %d %d", exposure, analog_gain, digital_gain);
+
+    fclose(fichier);
+    return 1;
+}
+
+
 
 /* the capabilities of the inputs and outputs.
  *
@@ -217,7 +247,12 @@ gst_autoexposure_init(Gstautoexposure *filter)
   filter->useHistogram = FALSE;
   filter->maxAnalogGain = 15;
   filter->useDigitalGain = TRUE;
+  
   initialization("/dev/video0", 2);
+
+
+
+
 }
 
 static void
@@ -394,9 +429,32 @@ double valeur_moyenne(int histo[], int taille)
   }
 }
 
+
+
+
+
+
+
+
 static GstFlowReturn
 gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
 {
+if(proc_once)
+{
+	int tmp_exp,tmp_analog,tmp_digital;
+if(read_conf(&tmp_exp,&tmp_analog,&tmp_digital))
+{
+    	printf("Initial conf : exposure = %d analog_gain = %d digital_gain = %d\n", tmp_exp, tmp_analog, tmp_digital);
+	int exp = get_control("exposure");
+	printf("exp actual %d \n",exp);
+  	set_control("exposure", tmp_exp);
+	set_control("analog_gain", tmp_analog);
+	set_control("digital_gain", tmp_digital);
+	exp = get_control("analog_gain");
+	printf("exp actual %d \n",exp);
+}
+proc_once=0;
+}
   Gstautoexposure *filter;
 
   filter = GST_AUTOEXPOSURE(parent);
@@ -480,8 +538,17 @@ gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
 
 static void gst_autoexposure_finalize(GObject *object)
 {
+int tmp_exp,tmp_analog,tmp_digital;
+
+  	tmp_exp = get_control("exposure");
+	tmp_analog = get_control("analog_gain");
+	tmp_digital = get_control("digital_gain");
+write_conf(tmp_exp,tmp_analog,tmp_digital);
+	
+
   g_print("driver closed\n");
   close_driver_access();
+  
 }
 
 /* entry point to initialize the plug-in
