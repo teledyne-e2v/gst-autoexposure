@@ -171,20 +171,20 @@ gst_autoexposure_class_init(GstautoexposureClass *klass)
                                   g_param_spec_boolean("silent", "Silent", "Produce verbose output ?",
                                                        FALSE, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_WORK,
-                                  g_param_spec_boolean("work", "Work", "enable/disable work",
+                                  g_param_spec_boolean("work", "Work", "enable/disable autoexposure (usefull only for applications)",
                                                        TRUE, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_USEEXPOSITIONTIME,
                                   g_param_spec_boolean("useExpositionTime", "UseExpositionTime", "enable/disable exposition time usage",
                                                        TRUE, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_USEHISTOGRAM,
-                                  g_param_spec_boolean("useHistogram", "UseHistogram", "enable/disable exposition time usage",
+                                  g_param_spec_boolean("useHistogram", "UseHistogram", "not implemented yet, please do not use",
                                                        FALSE, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_OPTIMIZE,
-                                  g_param_spec_int("optimize", "Optimize", "Optimization level", 0, 5, 0, G_PARAM_READWRITE));
+                                  g_param_spec_int("optimize", "Optimize", "Optimization level, used to reduce CPU load", 0, 5, 1, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_TARGET,
-                                  g_param_spec_int("target", "Target", "Targeted mean of the image", 0, 255, 50, G_PARAM_READWRITE));
+                                  g_param_spec_int("target", "Target", "Targeted mean of the image, an higher the target will produce brighter the image", 0, 255, 60, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_LATENCY,
-                                  g_param_spec_int("latency", "Latency", "pipeline latency", 0, 100, 4, G_PARAM_READWRITE));
+                                  g_param_spec_int("latency", "Latency", "Pipeline latency, Really important, if the image is flickering, this is the most probable cause", 0, 100, 4, G_PARAM_READWRITE));
 
   g_object_class_install_property(gobject_class, PROP_ROI1X,
                                   g_param_spec_int("roi1x", "Roi1x", "Roi coordinates", 0, 1920, 0, G_PARAM_READWRITE));
@@ -196,13 +196,13 @@ gst_autoexposure_class_init(GstautoexposureClass *klass)
                                   g_param_spec_int("roi2y", "Roi2y", "Roi coordinates", 0, 1080, 1080, G_PARAM_READWRITE));
 
   g_object_class_install_property(gobject_class, PROP_MAXEXPOSITION,
-                                  g_param_spec_int("maxExposition", "MaxExposition", "maximum exposition tolerate",
+                                  g_param_spec_int("maxExposition", "MaxExposition", "Maximum exposition tolerate",
                                                    5, 200000, 5, G_PARAM_READWRITE));
 g_object_class_install_property(gobject_class, PROP_MAXANALOGGAIN,
-                                  g_param_spec_int("maxAnalogGain", "MaxAnalogGain", "maximum analog gain tolerate",
+                                  g_param_spec_int("maxAnalogGain", "MaxAnalogGain", "Maximum analog gain tolerate",
                                                    0, 15, 15, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_USEDIGITALGAIN,
-                                  g_param_spec_boolean("useDigitalGain", "UseDigitalGain", "enable/disable digital gain usage",
+                                  g_param_spec_boolean("useDigitalGain", "UseDigitalGain", "Enable/disable digital gain usage",
                                                        FALSE, G_PARAM_READWRITE));
 
   gst_element_class_set_details_simple(gstelement_class,
@@ -239,7 +239,7 @@ gst_autoexposure_init(Gstautoexposure *filter)
 
   filter->silent = FALSE;
   filter->work = TRUE;
-  filter->optimize = 0;
+  filter->optimize = 1;
   filter->maxExposition = 20000;
   filter->useExpositionTime = TRUE;
   filter->latency = 4;
