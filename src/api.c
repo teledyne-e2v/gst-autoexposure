@@ -183,12 +183,17 @@ void close_driver_access()
 void initialization(char *v4l2_device, int sensor_mode)
 {
 
-    unsigned int n_buffers;
+    //unsigned int n_buffers;
 
-    struct buffer *buffers;
+    //struct buffer *buffers;
 
     fd = open(v4l2_device, O_RDWR | O_NONBLOCK, 0);
-    system("v4l2-ctl -l > /tmp/ctrls_list.txt");
+    int err;
+    err = system("v4l2-ctl -l > /tmp/ctrls_list.txt");
+    if(err==-1)
+    {
+	printf("Failed to get control list");
+    }
     ctrls = fopen("/tmp/ctrls_list.txt", "r"); // open this file
 
     char line[256];

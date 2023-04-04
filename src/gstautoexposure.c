@@ -115,8 +115,12 @@ int read_conf(int *exposure, int *analog_gain, int *digital_gain) {
         return 0;
     }
 
-    fscanf(fichier, "%d %d %d", exposure, analog_gain, digital_gain);
-
+    int err = fscanf(fichier, "%d %d %d", exposure, analog_gain, digital_gain);
+    if(err == EOF)
+    {
+	return 0;
+    }
+	
     fclose(fichier);
     return 1;
 }
