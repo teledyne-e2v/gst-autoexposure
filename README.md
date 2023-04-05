@@ -91,73 +91,86 @@ Autoexposure with limited usage of gain to limit noise:
 
 # Plugin parameters
 
-  name                : The name of the object
-                        flags: readable, writable
-                        String. Default: "autoexposure0"
+-  silent              : Produce verbose output
+	- flags: readable, writable
+	- Boolean. 
+	- Default: false
 
-  parent              : The parent of the object
-                        flags: readable, writable
-                        Object of type "GstObject"
+-  work                : enable/disable autoexposure (usefull only for applications)
+	- flags: readable, writable
+	- Boolean. 
+	- Default: true
 
-  silent              : Produce verbose output ?
-                        flags: readable, writable
-                        Boolean. Default: false
+-  optimize            : Optimization level, used to reduce CPU load
+	- flags: readable, writable
+	- Integer. 
+	- Range: 0 - 5 
+	- Default: 1 
 
-  work                : enable/disable autoexposure (usefull only for applications)
-                        flags: readable, writable
-                        Boolean. Default: true
+-  maxExposition       : Maximum exposition tolerate
+	- flags: readable, writable
+	- Integer. 
+	- Range: 5 - 200000 
+	- Default: 20000 
 
-  optimize            : Optimization level, used to reduce CPU load
-                        flags: readable, writable
-                        Integer. Range: 0 - 5 Default: 1 
+-  maxAnalogGain       : Maximum analog gain tolerate
+	- flags: readable, writable
+	- Integer. 
+	- Range: 0 - 15 
+	- Default: 15 
 
-  maxExposition       : Maximum exposition tolerate
-                        flags: readable, writable
-                        Integer. Range: 5 - 200000 Default: 20000 
+-  useDigitalGain      : Enable/disable digital gain usage
+	- flags: readable, writable
+	- Boolean. 
+	- Default: true
 
-  maxAnalogGain       : Maximum analog gain tolerate
-                        flags: readable, writable
-                        Integer. Range: 0 - 15 Default: 15 
+-  useExpositionTime   : enable/disable exposition time usage
+	- flags: readable, writable
+	- Boolean. 
+	- Default: true
 
-  useDigitalGain      : Enable/disable digital gain usage
-                        flags: readable, writable
-                        Boolean. Default: true
+-  latency             : Pipeline latency, Really important, if the image is flickering, this is the most probable cause
+	- flags: readable, writable
+	- Integer. 
+	- Range: 0 - 100 
+	- Default: 4 
 
-  useExpositionTime   : enable/disable exposition time usage
-                        flags: readable, writable
-                        Boolean. Default: true
+-  target              : Targeted mean of the image, an higher the target will produce brighter the image
+	- flags: readable, writable
+	- Integer.
+	- Range: 0 - 255 
+	- Default: 60 
 
-  latency             : Pipeline latency, Really important, if the image is flickering, this is the most probable cause
-                        flags: readable, writable
-                        Integer. Range: 0 - 100 Default: 4 
+-  roi1x               : Roi coordinates
+	- flags: readable, writable
+	- Integer. 
+	- Range: 0 - 1920 
+	- Default: 0 
 
-  target              : Targeted mean of the image, an higher the target will produce brighter the image
-                        flags: readable, writable
-                        Integer. Range: 0 - 255 Default: 60 
+-  roi1y               : Roi coordinates
+	- flags: readable, writable
+	- Integer. 
+	- Range: 0 - 1080 
+	- Default: 0 
 
-  roi1x               : Roi coordinates
-                        flags: readable, writable
-                        Integer. Range: 0 - 1920 Default: 0 
+-  roi2x               : Roi coordinates
+	- flags: readable, writable
+	- Integer. 
+	- Range: 0 - 1920 
+	- Default: 1920 
 
-  roi1y               : Roi coordinates
-                        flags: readable, writable
-                        Integer. Range: 0 - 1080 Default: 0 
+-  roi2y               : Roi coordinates
+	- flags: readable, writable
+	- Integer. 
+	- Range: 0 - 1080 
+	- Default: 1080 
 
-  roi2x               : Roi coordinates
-                        flags: readable, writable
-                        Integer. Range: 0 - 1920 Default: 1920 
+-  useHistogram        : not implemented yet, please do not use
+	- flags: readable, writable
+	- Boolean. 
+	- Default: false
 
-  roi2y               : Roi coordinates
-                        flags: readable, writable
-                        Integer. Range: 0 - 1080 Default: 1080 
-
-  useHistogram        : not implemented yet, please do not use
-                        flags: readable, writable
-                        Boolean. Default: false
-
-  loadAndSaveConf     : Load and save the exposure / gain parameters and load them when starting the plugin
-                        flags: readable, writable
-                        Boolean. Default: true
-
-
-
+-  loadAndSaveConf     : Load and save the exposure / gain parameters and load them when starting the plugin
+	- flags: readable, writable
+	- Boolean. 
+	- Default: true
