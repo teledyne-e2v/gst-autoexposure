@@ -9,6 +9,19 @@ This plugin implement an autoexposure algorithm. (using global mean histogram wi
 
 the algorithm always favors the use of the exposure time then the analog gain and finally the digital gain to reduce the noise as much as possible, look at the parameters if you want to apply additional constraints.
 
+# Dependencies
+
+The following libraries are required for this plugin.
+- v4l-utils
+- libv4l-dev
+- libgstreamer1.0-dev
+- libgstreamer-plugins-base1.0-dev
+
+Install them with: 
+
+```
+sudo apt install v4l-utils libv4l-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+```
 
 # Compilation
 First you must make sure that your device's clock is correctly setup.
