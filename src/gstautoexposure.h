@@ -89,6 +89,7 @@ struct _Gstautoexposure
   gint *histogram;
   gint maxAnalogGain;
   gboolean useDigitalGain;
+  gboolean loadAndSaveConf;
 };
 
 struct _GstautoexposureClass

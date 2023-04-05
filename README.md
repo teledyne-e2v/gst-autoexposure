@@ -64,9 +64,15 @@ Autoexposure with limited usage of gain to limit noise:
 
 Note : You should have update the nvvidconv plugin to support GRAY8, if not the image will be grayed out.
 
+Simple autoexposure using default parameters:
+
 	gst-launch-1.0 v4l2src ! 'video/x-raw,width=1920,height=1080,format=GRAY8' ! autoexposure ! nvvidconv ! 'video/x-raw(memory:NVMM),format=I420' ! nv3dsink sync=0
 	
+Autoexposure using only gains and using optimization to reduce CPU load:
+
 	gst-launch-1.0 v4l2src ! 'video/x-raw,width=1920,height=1080,format=GRAY8' ! autoexposure useExpositionTime=false optimize=2 ! nvvidconv ! 'video/x-raw(memory:NVMM),format=I420' ! nv3dsink sync=0
+
+Autoexposure with limited usage of gain to limit noise:
 
 	gst-launch-1.0 v4l2src ! 'video/x-raw,width=1920,height=1080,format=GRAY8' ! autoexposure maxAnalogGain=8 useDigitalGain=false ! nvvidconv ! 'video/x-raw(memory:NVMM),format=I420' ! nv3dsink sync=0
 
@@ -135,5 +141,10 @@ Note : You should have update the nvvidconv plugin to support GRAY8, if not the 
   useHistogram        : not implemented yet, please do not use
                         flags: readable, writable
                         Boolean. Default: false
+
+  loadAndSaveConf     : Load and save the exposure / gain parameters and load them when starting the plugin
+                        flags: readable, writable
+                        Boolean. Default: true
+
 
 
