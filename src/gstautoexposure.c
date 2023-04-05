@@ -92,7 +92,9 @@ enum
   PROP_ROI1Y,
   PROP_ROI2X,
   PROP_ROI2Y,
-  PROP_USEHISTOGRAM /*,
+  PROP_USEHISTOGRAM,
+  PROP_LOADANDSAVECONF 
+   /*,
    PROP_HISTOGRAM*/
 };
 
@@ -185,6 +187,10 @@ gst_autoexposure_class_init(GstautoexposureClass *klass)
                                   g_param_spec_int("target", "Target", "Targeted mean of the image, an higher the target will produce brighter the image", 0, 255, 60, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_LATENCY,
                                   g_param_spec_int("latency", "Latency", "Pipeline latency, Really important, if the image is flickering, this is the most probable cause", 0, 100, 4, G_PARAM_READWRITE));
+   g_object_class_install_property(gobject_class, PROP_LOADANDSAVECONF,
+                                  g_param_spec_boolean("loadAndSaveConf", "LoadAndSaveConf", "Load and save the exposure / gain parameters and load them when starting the plugin",
+                                                       TRUE, G_PARAM_READWRITE));
+
 
   g_object_class_install_property(gobject_class, PROP_ROI1X,
                                   g_param_spec_int("roi1x", "Roi1x", "Roi coordinates", 0, 1920, 0, G_PARAM_READWRITE));
@@ -251,11 +257,9 @@ gst_autoexposure_init(Gstautoexposure *filter)
   filter->useHistogram = FALSE;
   filter->maxAnalogGain = 15;
   filter->useDigitalGain = TRUE;
+  filter->loadAndSaveConf = TRUE;
   
   initialization("/dev/video0", 2);
-
-
-
 
 }
 
@@ -309,6 +313,9 @@ gst_autoexposure_set_property(GObject *object, guint prop_id,
   case PROP_ROI2Y:
     filter->ROI2y = g_value_get_int(value);
     break;
+  case PROP_LOADANDSAVECONF:
+    filter->loadAndSaveConf = g_value_get_boolean(value);
+    break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
     break;
@@ -337,6 +344,9 @@ gst_autoexposure_get_property(GObject *object, guint prop_id,
     break;
   case PROP_USEHISTOGRAM:
     g_value_set_boolean(value, filter->useHistogram);
+    break;
+  case PROP_LOADANDSAVECONF:
+    g_value_set_boolean(value, filter->loadAndSaveConf);
     break;
   case PROP_OPTIMIZE:
     g_value_set_int(value, filter->optimize);
@@ -443,7 +453,7 @@ double valeur_moyenne(int histo[], int taille)
 static GstFlowReturn
 gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
 {
-if(proc_once)
+if(proc_once && filter->loadAndSaveConf)
 {
 	int tmp_exp,tmp_analog,tmp_digital;
 if(read_conf(&tmp_exp,&tmp_analog,&tmp_digital))
@@ -542,13 +552,15 @@ proc_once=0;
 
 static void gst_autoexposure_finalize(GObject *object)
 {
+  if( filter->loadAndSaveConf)
+  {
 int tmp_exp,tmp_analog,tmp_digital;
 
   	tmp_exp = get_control("exposure");
 	tmp_analog = get_control("analog_gain");
 	tmp_digital = get_control("digital_gain");
 write_conf(tmp_exp,tmp_analog,tmp_digital);
-	
+  }
 
   g_print("driver closed\n");
   close_driver_access();
