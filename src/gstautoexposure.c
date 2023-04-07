@@ -93,7 +93,9 @@ enum
   PROP_ROI2X,
   PROP_ROI2Y,
   PROP_USEHISTOGRAM,
-  PROP_LOADANDSAVECONF 
+  PROP_LOADANDSAVECONF,
+  PROP_DEBUG,
+  PROP_TOLERANCE
    /*,
    PROP_HISTOGRAM*/
 };
@@ -210,7 +212,12 @@ g_object_class_install_property(gobject_class, PROP_MAXANALOGGAIN,
   g_object_class_install_property(gobject_class, PROP_USEDIGITALGAIN,
                                   g_param_spec_boolean("useDigitalGain", "UseDigitalGain", "Enable/disable digital gain usage",
                                                        FALSE, G_PARAM_READWRITE));
-
+  g_object_class_install_property(gobject_class, PROP_DEBUG,
+                                  g_param_spec_boolean("debug", "Debug", "Enable/disable debug mode, show the exposure parametre / time to converge",
+                                                       FALSE, G_PARAM_READWRITE));
+  g_object_class_install_property(gobject_class, PROP_TOLERANCE,
+                                  g_param_spec_int("tolerance", "Tolerance", "Tolerance of target",
+                                                   5, 10, 100, G_PARAM_READWRITE));
   gst_element_class_set_details_simple(gstelement_class,
                                        "autoexposure",
                                        "FIXME:Generic",
@@ -258,7 +265,8 @@ gst_autoexposure_init(Gstautoexposure *filter)
   filter->maxAnalogGain = 15;
   filter->useDigitalGain = TRUE;
   filter->loadAndSaveConf = TRUE;
-  
+  filter->debug = FALSE;
+  filter->tolerance = 10;
   initialization("/dev/video0", 2);
 
 }
@@ -315,6 +323,12 @@ gst_autoexposure_set_property(GObject *object, guint prop_id,
     break;
   case PROP_LOADANDSAVECONF:
     filter->loadAndSaveConf = g_value_get_boolean(value);
+    break;
+  case PROP_DEBUG:
+    filter->debug = g_value_get_boolean(value);
+    break;
+  case PROP_TOLERANCE:
+    filter->tolerance = g_value_get_int(value);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -374,7 +388,14 @@ gst_autoexposure_get_property(GObject *object, guint prop_id,
     break;
   case PROP_ROI2Y:
     g_value_set_int(value, filter->ROI2y);
-    break; /*
+    break;
+  case PROP_DEBUG:
+    g_value_set_boolean(value, filter->debug);
+    break;
+  case PROP_TOLERANCE:
+    g_value_set_int(value, filter->tolerance);
+    break;
+     /*
    case PROP_HISTOGRAM:
      g_value_set_pointer(value, filter->histogram);
      break;*/
@@ -508,13 +529,26 @@ proc_once=0;
       global_mean = (global_mean * (1 + filter->optimize)) / ((float)filter->ROI2y - filter->ROI1y);
 
 
-      if (filter->useExpositionTime)
+      if(global_mean > filter->target - filter->tolerance && global_mean < filter->target + filter->tolerance)
       {
-        algorithm_with_exposition(global_mean, filter->latency,  filter->target,  filter->maxExposition, filter->maxAnalogGain, filter->useDigitalGain);
+        if(converge==false)
+        {
+          frames_to_converge=0;
+          converge=true;
+          g_print("Frames to converge : %d\n",frames_to_converge);
+        }
       }
       else
       {
-        algorithm_without_exposition(global_mean, filter->latency, filter->target, filter->maxAnalogGain, filter->useDigitalGain);
+        frames_to_converge++;
+      }
+      if (filter->useExpositionTime)
+      {
+        algorithm_with_exposition(global_mean, filter->latency,  filter->target,  filter->maxExposition, filter->maxAnalogGain, filter->useDigitalGain, filter->tolerance);
+      }
+      else
+      {
+        algorithm_without_exposition(global_mean, filter->latency, filter->target, filter->maxAnalogGain, filter->useDigitalGain, filter->tolerance);
       }
     }/*
     else

@@ -46,7 +46,7 @@ float algorithm_analog_gain(int target, float global_mean, int max_analog_gain)
 	return global_mean*pow(1.18,(int)new_analog_gain-analog_gain);
 }
 
-float algorithm_without_exposition(float global_mean, int latency, int target, int max_analog_gain, bool toggle_digital_gain)
+float algorithm_without_exposition(float global_mean, int latency, int target, int max_analog_gain, bool toggle_digital_gain, int tolerance)
 {	
 	int digital_gain = get_control("digital_gain");
 float expected=global_mean;
@@ -56,7 +56,7 @@ float expected=global_mean;
 		{
 			expected = algorithm_analog_gain(target,global_mean,max_analog_gain); 
 
-			if((expected > target + 10 || expected < target - 10) && toggle_digital_gain)
+			if((expected > target + tolerance || expected < target - tolerance) && toggle_digital_gain)
 			{
 				expected=algorithm_digital_gain(target,expected,digital_gain);
 			}
@@ -66,7 +66,7 @@ float expected=global_mean;
 			if(toggle_digital_gain)
 			{
 				expected = algorithm_digital_gain(target,global_mean,digital_gain);
-				if((expected > target + 10 || expected < target - 10) || !toggle_digital_gain)
+				if((expected > target + tolerance || expected < target - tolerance) || !toggle_digital_gain)
 				{
 					expected=algorithm_analog_gain(target,expected,max_analog_gain);
 				}
@@ -84,7 +84,7 @@ float expected=global_mean;
 		proc_once2++;
 	}
 
-	if (proc_once2 > latency && (global_mean > target + 10 || global_mean < target - 10)) // restart the autoexposition algorithm if the targeted mean is to far from the global min
+	if (proc_once2 > latency && (global_mean > target + tolerance || global_mean < target - tolerance)) // restart the autoexposition algorithm if the targeted mean is to far from the global min
 	{
 		proc_once2 = 0;
 	}
@@ -117,7 +117,7 @@ float algorithm_exposition(int target, float global_mean, int max_exposition)
 }
 
 
-void algorithm_with_exposition(float global_mean, int latency, int target, int max_exposition, int max_analog_gain, bool toggle_digital_gain)
+void algorithm_with_exposition(float global_mean, int latency, int target, int max_exposition, int max_analog_gain, bool toggle_digital_gain, int tolerance)
 {
 	
 	if (proc_Once == 0)
@@ -125,7 +125,7 @@ void algorithm_with_exposition(float global_mean, int latency, int target, int m
 		if(target > global_mean) // if the targeted mean is greater than the global mean, we start to change the analogic gain (because he should produce less noise than digital gain) 
 		{
 			float expected = algorithm_exposition(target,global_mean,max_exposition); 
-			if((expected > target + 10 || expected < target - 10))
+			if((expected > target + tolerance || expected < target - tolerance))
 			{	
 				proc_once2=0;
 				expected=algorithm_without_exposition(expected,latency,target, max_analog_gain, toggle_digital_gain);
@@ -135,7 +135,7 @@ void algorithm_with_exposition(float global_mean, int latency, int target, int m
 		{
 			proc_once2=0;
 			float expected = algorithm_without_exposition(global_mean,latency,target, max_analog_gain, toggle_digital_gain);
-			if((expected > target + 10 || expected < target - 10))
+			if((expected > target + tolerance || expected < target - tolerance))
 			{
 				expected=algorithm_exposition(target,expected,max_exposition);
 			}
@@ -147,7 +147,7 @@ void algorithm_with_exposition(float global_mean, int latency, int target, int m
 		proc_Once++;
 	}
 
-	if (proc_Once > latency && (global_mean > target + 10 || global_mean < target - 10)) // restart the autoexposition algorithm if the targeted mean is to far from the global min
+	if (proc_Once > latency && (global_mean > target + tolerance || global_mean < target - tolerance)) // restart the autoexposition algorithm if the targeted mean is to far from the global min
 	{
 		proc_Once = 0;
 	}

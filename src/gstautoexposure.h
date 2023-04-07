@@ -68,6 +68,8 @@ typedef struct _GstautoexposureClass GstautoexposureClass;
 static void gst_autoexposure_finalize(GObject *object);
 int init = 0;
 int proc_once=1;
+bool converge=false;
+int frames_to_converge=0;
 struct _Gstautoexposure
 {
   GstElement element;
@@ -89,6 +91,8 @@ struct _Gstautoexposure
   gint *histogram;
   gint maxAnalogGain;
   gboolean useDigitalGain;
+  gboolean debug;
+  gint tolerance;
 };
 
 struct _GstautoexposureClass
