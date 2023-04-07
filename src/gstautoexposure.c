@@ -217,7 +217,7 @@ g_object_class_install_property(gobject_class, PROP_MAXANALOGGAIN,
                                                        FALSE, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_TOLERANCE,
                                   g_param_spec_int("tolerance", "Tolerance", "Tolerance of target",
-                                                   5, 10, 100, G_PARAM_READWRITE));
+                                                   5, 100, 10, G_PARAM_READWRITE));
   gst_element_class_set_details_simple(gstelement_class,
                                        "autoexposure",
                                        "FIXME:Generic",
@@ -533,13 +533,15 @@ proc_once=0;
       {
         if(converge==false)
         {
-          frames_to_converge=0;
+
           converge=true;
           g_print("Frames to converge : %d\n",frames_to_converge);
+          frames_to_converge=0;
         }
       }
       else
       {
+	converge=false;
         frames_to_converge++;
       }
       if (filter->useExpositionTime)

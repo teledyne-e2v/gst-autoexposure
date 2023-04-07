@@ -45,7 +45,7 @@
 
 #ifndef __GST_AUTOEXPOSURE_H__
 #define __GST_AUTOEXPOSURE_H__
-
+#include <stdbool.h>
 #include <gst/gst.h>
 
 G_BEGIN_DECLS

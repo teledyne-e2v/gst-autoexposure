@@ -128,13 +128,13 @@ void algorithm_with_exposition(float global_mean, int latency, int target, int m
 			if((expected > target + tolerance || expected < target - tolerance))
 			{	
 				proc_once2=0;
-				expected=algorithm_without_exposition(expected,latency,target, max_analog_gain, toggle_digital_gain);
+				expected=algorithm_without_exposition(expected,latency,target, max_analog_gain, toggle_digital_gain, tolerance);
 			}
 		}
 		else  // if the targeted mean is lower than the global mean, we start to change the digital gain (to minimize the noise)
 		{
 			proc_once2=0;
-			float expected = algorithm_without_exposition(global_mean,latency,target, max_analog_gain, toggle_digital_gain);
+			float expected = algorithm_without_exposition(global_mean,latency,target, max_analog_gain, toggle_digital_gain, tolerance);
 			if((expected > target + tolerance || expected < target - tolerance))
 			{
 				expected=algorithm_exposition(target,expected,max_exposition);
