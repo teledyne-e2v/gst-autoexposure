@@ -9,6 +9,19 @@ This plugin implement an autoexposure algorithm. (using global mean histogram wi
 
 the algorithm always favors the use of the exposure time then the analog gain and finally the digital gain to reduce the noise as much as possible, look at the parameters if you want to apply additional constraints.
 
+# Dependencies
+
+The following libraries are required for this plugin.
+- v4l-utils
+- libv4l-dev
+- libgstreamer1.0-dev
+- libgstreamer-plugins-base1.0-dev
+
+Install them with: 
+
+```
+sudo apt install v4l-utils libv4l-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+```
 
 # Compilation
 First you must make sure that your device's clock is correctly setup.
@@ -64,76 +77,100 @@ Autoexposure with limited usage of gain to limit noise:
 
 Note : You should have update the nvvidconv plugin to support GRAY8, if not the image will be grayed out.
 
+Simple autoexposure using default parameters:
+
 	gst-launch-1.0 v4l2src ! 'video/x-raw,width=1920,height=1080,format=GRAY8' ! autoexposure ! nvvidconv ! 'video/x-raw(memory:NVMM),format=I420' ! nv3dsink sync=0
 	
+Autoexposure using only gains and using optimization to reduce CPU load:
+
 	gst-launch-1.0 v4l2src ! 'video/x-raw,width=1920,height=1080,format=GRAY8' ! autoexposure useExpositionTime=false optimize=2 ! nvvidconv ! 'video/x-raw(memory:NVMM),format=I420' ! nv3dsink sync=0
+
+Autoexposure with limited usage of gain to limit noise:
 
 	gst-launch-1.0 v4l2src ! 'video/x-raw,width=1920,height=1080,format=GRAY8' ! autoexposure maxAnalogGain=8 useDigitalGain=false ! nvvidconv ! 'video/x-raw(memory:NVMM),format=I420' ! nv3dsink sync=0
 
 # Plugin parameters
 
-  name                : The name of the object
-                        flags: readable, writable
-                        String. Default: "autoexposure0"
+-  silent              : Produce verbose output
+	- flags: readable, writable
+	- Boolean. 
+	- Default: false
 
-  parent              : The parent of the object
-                        flags: readable, writable
-                        Object of type "GstObject"
+-  work                : enable/disable autoexposure (usefull only for applications)
+	- flags: readable, writable
+	- Boolean. 
+	- Default: true
 
-  silent              : Produce verbose output ?
-                        flags: readable, writable
-                        Boolean. Default: false
+-  optimize            : Optimization level, used to reduce CPU load
+	- flags: readable, writable
+	- Integer. 
+	- Range: 0 - 5 
+	- Default: 1 
 
-  work                : enable/disable autoexposure (usefull only for applications)
-                        flags: readable, writable
-                        Boolean. Default: true
+-  maxExposition       : Maximum exposition tolerate
+	- flags: readable, writable
+	- Integer. 
+	- Range: 5 - 200000 
+	- Default: 20000 
 
-  optimize            : Optimization level, used to reduce CPU load
-                        flags: readable, writable
-                        Integer. Range: 0 - 5 Default: 1 
+-  maxAnalogGain       : Maximum analog gain tolerate
+	- flags: readable, writable
+	- Integer. 
+	- Range: 0 - 15 
+	- Default: 15 
 
-  maxExposition       : Maximum exposition tolerate
-                        flags: readable, writable
-                        Integer. Range: 5 - 200000 Default: 20000 
+-  useDigitalGain      : Enable/disable digital gain usage
+	- flags: readable, writable
+	- Boolean. 
+	- Default: true
 
-  maxAnalogGain       : Maximum analog gain tolerate
-                        flags: readable, writable
-                        Integer. Range: 0 - 15 Default: 15 
+-  useExpositionTime   : enable/disable exposition time usage
+	- flags: readable, writable
+	- Boolean. 
+	- Default: true
 
-  useDigitalGain      : Enable/disable digital gain usage
-                        flags: readable, writable
-                        Boolean. Default: true
+-  latency             : Pipeline latency, Really important, if the image is flickering, this is the most probable cause
+	- flags: readable, writable
+	- Integer. 
+	- Range: 0 - 100 
+	- Default: 4 
 
-  useExpositionTime   : enable/disable exposition time usage
-                        flags: readable, writable
-                        Boolean. Default: true
+-  target              : Targeted mean of the image, an higher the target will produce brighter the image
+	- flags: readable, writable
+	- Integer.
+	- Range: 0 - 255 
+	- Default: 60 
 
-  latency             : Pipeline latency, Really important, if the image is flickering, this is the most probable cause
-                        flags: readable, writable
-                        Integer. Range: 0 - 100 Default: 4 
+-  roi1x               : Roi coordinates
+	- flags: readable, writable
+	- Integer. 
+	- Range: 0 - 1920 
+	- Default: 0 
 
-  target              : Targeted mean of the image, an higher the target will produce brighter the image
-                        flags: readable, writable
-                        Integer. Range: 0 - 255 Default: 60 
+-  roi1y               : Roi coordinates
+	- flags: readable, writable
+	- Integer. 
+	- Range: 0 - 1080 
+	- Default: 0 
 
-  roi1x               : Roi coordinates
-                        flags: readable, writable
-                        Integer. Range: 0 - 1920 Default: 0 
+-  roi2x               : Roi coordinates
+	- flags: readable, writable
+	- Integer. 
+	- Range: 0 - 1920 
+	- Default: 1920 
 
-  roi1y               : Roi coordinates
-                        flags: readable, writable
-                        Integer. Range: 0 - 1080 Default: 0 
+-  roi2y               : Roi coordinates
+	- flags: readable, writable
+	- Integer. 
+	- Range: 0 - 1080 
+	- Default: 1080 
 
-  roi2x               : Roi coordinates
-                        flags: readable, writable
-                        Integer. Range: 0 - 1920 Default: 1920 
+-  useHistogram        : not implemented yet, please do not use
+	- flags: readable, writable
+	- Boolean. 
+	- Default: false
 
-  roi2y               : Roi coordinates
-                        flags: readable, writable
-                        Integer. Range: 0 - 1080 Default: 1080 
-
-  useHistogram        : not implemented yet, please do not use
-                        flags: readable, writable
-                        Boolean. Default: false
-
-
+-  loadAndSaveConf     : Load and save the exposure / gain parameters and load them when starting the plugin
+	- flags: readable, writable
+	- Boolean. 
+	- Default: true

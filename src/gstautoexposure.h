@@ -93,6 +93,7 @@ struct _Gstautoexposure
   gboolean useDigitalGain;
   gboolean debug;
   gint tolerance;
+  gboolean loadAndSaveConf;
 };
 
 struct _GstautoexposureClass

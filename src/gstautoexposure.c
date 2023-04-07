@@ -474,7 +474,11 @@ double valeur_moyenne(int histo[], int taille)
 static GstFlowReturn
 gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
 {
-if(proc_once && filter->loadAndSaveConf)
+
+  Gstautoexposure *filter;
+
+  filter = GST_AUTOEXPOSURE(parent);
+  if(proc_once && filter->loadAndSaveConf)
 {
 	int tmp_exp,tmp_analog,tmp_digital;
 if(read_conf(&tmp_exp,&tmp_analog,&tmp_digital))
@@ -490,10 +494,6 @@ if(read_conf(&tmp_exp,&tmp_analog,&tmp_digital))
 }
 proc_once=0;
 }
-  Gstautoexposure *filter;
-
-  filter = GST_AUTOEXPOSURE(parent);
-
   /* just push out the incoming buffer without touching it */
 
   GstMapInfo map;
@@ -586,6 +586,9 @@ proc_once=0;
 
 static void gst_autoexposure_finalize(GObject *object)
 {
+  Gstautoexposure *filter;
+
+  filter = GST_AUTOEXPOSURE(object);
   if( filter->loadAndSaveConf)
   {
 int tmp_exp,tmp_analog,tmp_digital;
