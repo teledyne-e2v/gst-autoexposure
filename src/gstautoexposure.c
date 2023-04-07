@@ -85,51 +85,54 @@ enum
   PROP_MAXEXPOSITION,
   PROP_MAXANALOGGAIN,
   PROP_USEDIGITALGAIN,
+  PROP_MINDIGITALGAIN,
+  PROP_MAXDIGITALGAIN,
   PROP_USEEXPOSITIONTIME,
   PROP_LATENCY,
   PROP_TARGET,
+  PROP_THRESHOLD,
   PROP_ROI1X,
   PROP_ROI1Y,
   PROP_ROI2X,
   PROP_ROI2Y,
   PROP_USEHISTOGRAM,
   PROP_LOADANDSAVECONF,
-  PROP_DEBUG,
-  PROP_TOLERANCE
-   /*,
-   PROP_HISTOGRAM*/
+  PROP_DEBUG
+
+  /*,
+  PROP_HISTOGRAM*/
 };
 
+void write_conf(int exposure, int analog_gain, int digital_gain)
+{
+  FILE *fichier = fopen("/tmp/exposure.txt", "w");
+  if (fichier == NULL)
+  {
+    printf("Error : Can't open tmp file\n");
+    return;
+  }
 
-void write_conf(int exposure, int analog_gain, int digital_gain) {
-    FILE *fichier = fopen("/tmp/exposure.txt", "w");
-    if (fichier == NULL) {
-        printf("Error : Can't open tmp file\n");
-        return;
-    }
-
-    fprintf(fichier, "%d %d %d", exposure, analog_gain, digital_gain);
-    fclose(fichier);
+  fprintf(fichier, "%d %d %d", exposure, analog_gain, digital_gain);
+  fclose(fichier);
 }
 
+int read_conf(int *exposure, int *analog_gain, int *digital_gain)
+{
+  FILE *fichier = fopen("/tmp/exposure.txt", "r");
+  if (fichier == NULL)
+  {
+    return 0;
+  }
 
-int read_conf(int *exposure, int *analog_gain, int *digital_gain) {
-    FILE *fichier = fopen("/tmp/exposure.txt", "r");
-    if (fichier == NULL) {
-        return 0;
-    }
+  int err = fscanf(fichier, "%d %d %d", exposure, analog_gain, digital_gain);
+  if (err == EOF)
+  {
+    return 0;
+  }
 
-    int err = fscanf(fichier, "%d %d %d", exposure, analog_gain, digital_gain);
-    if(err == EOF)
-    {
-	return 0;
-    }
-	
-    fclose(fichier);
-    return 1;
+  fclose(fichier);
+  return 1;
 }
-
-
 
 /* the capabilities of the inputs and outputs.
  *
@@ -189,10 +192,9 @@ gst_autoexposure_class_init(GstautoexposureClass *klass)
                                   g_param_spec_int("target", "Target", "Targeted mean of the image, an higher the target will produce brighter the image", 0, 255, 60, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_LATENCY,
                                   g_param_spec_int("latency", "Latency", "Pipeline latency, Really important, if the image is flickering, this is the most probable cause", 0, 100, 4, G_PARAM_READWRITE));
-   g_object_class_install_property(gobject_class, PROP_LOADANDSAVECONF,
+  g_object_class_install_property(gobject_class, PROP_LOADANDSAVECONF,
                                   g_param_spec_boolean("loadAndSaveConf", "LoadAndSaveConf", "Load and save the exposure / gain parameters and load them when starting the plugin",
                                                        TRUE, G_PARAM_READWRITE));
-
 
   g_object_class_install_property(gobject_class, PROP_ROI1X,
                                   g_param_spec_int("roi1x", "Roi1x", "Roi coordinates", 0, 1920, 0, G_PARAM_READWRITE));
@@ -206,7 +208,7 @@ gst_autoexposure_class_init(GstautoexposureClass *klass)
   g_object_class_install_property(gobject_class, PROP_MAXEXPOSITION,
                                   g_param_spec_int("maxExposition", "MaxExposition", "Maximum exposition tolerate",
                                                    5, 200000, 5, G_PARAM_READWRITE));
-g_object_class_install_property(gobject_class, PROP_MAXANALOGGAIN,
+  g_object_class_install_property(gobject_class, PROP_MAXANALOGGAIN,
                                   g_param_spec_int("maxAnalogGain", "MaxAnalogGain", "Maximum analog gain tolerate",
                                                    0, 15, 15, G_PARAM_READWRITE));
   g_object_class_install_property(gobject_class, PROP_USEDIGITALGAIN,
@@ -215,9 +217,15 @@ g_object_class_install_property(gobject_class, PROP_MAXANALOGGAIN,
   g_object_class_install_property(gobject_class, PROP_DEBUG,
                                   g_param_spec_boolean("debug", "Debug", "Enable/disable debug mode, show the exposure parametre / time to converge",
                                                        FALSE, G_PARAM_READWRITE));
-  g_object_class_install_property(gobject_class, PROP_TOLERANCE,
-                                  g_param_spec_int("tolerance", "Tolerance", "Tolerance of target",
+  g_object_class_install_property(gobject_class, PROP_THRESHOLD,
+                                  g_param_spec_int("threshold", "Threshold", "Threshold of target",
                                                    5, 10, 100, G_PARAM_READWRITE));
+  g_object_class_install_property(gobject_class, PROP_MINDIGITALGAIN,
+                                  g_param_spec_int("minDigitalGain", "MinDigitalGain", "minimum digital gain useable by the algorithm",
+                                                   1, 2000, 256, G_PARAM_READWRITE));
+  g_object_class_install_property(gobject_class, PROP_MAXDIGITALGAIN,
+                                  g_param_spec_int("maxDigitalGain", "MaxDigitalGain", "maximum digital gain useable by the algorithm",
+                                                   1, 4096, 4096, G_PARAM_READWRITE));
   gst_element_class_set_details_simple(gstelement_class,
                                        "autoexposure",
                                        "FIXME:Generic",
@@ -266,9 +274,10 @@ gst_autoexposure_init(Gstautoexposure *filter)
   filter->useDigitalGain = TRUE;
   filter->loadAndSaveConf = TRUE;
   filter->debug = FALSE;
-  filter->tolerance = 10;
+  filter->threshold = 10;
+  filter->minDigitalGain = 256;
+  filter->maxDigitalGain = 4096;
   initialization("/dev/video0", 2);
-
 }
 
 static void
@@ -296,6 +305,9 @@ gst_autoexposure_set_property(GObject *object, guint prop_id,
     break;
   case PROP_TARGET:
     filter->target = g_value_get_int(value);
+    break;
+  case PROP_THRESHOLD:
+    filter->threshold = g_value_get_int(value);
     break;
   case PROP_USEDIGITALGAIN:
     filter->useDigitalGain = g_value_get_boolean(value);
@@ -327,8 +339,11 @@ gst_autoexposure_set_property(GObject *object, guint prop_id,
   case PROP_DEBUG:
     filter->debug = g_value_get_boolean(value);
     break;
-  case PROP_TOLERANCE:
-    filter->tolerance = g_value_get_int(value);
+  case PROP_MINDIGITALGAIN:
+    filter->minDigitalGain = g_value_get_int(value);
+    break;
+  case PROP_MAXDIGITALGAIN:
+    filter->maxDigitalGain = g_value_get_int(value);
     break;
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
@@ -392,13 +407,19 @@ gst_autoexposure_get_property(GObject *object, guint prop_id,
   case PROP_DEBUG:
     g_value_set_boolean(value, filter->debug);
     break;
-  case PROP_TOLERANCE:
-    g_value_set_int(value, filter->tolerance);
+  case PROP_THRESHOLD:
+    g_value_set_int(value, filter->threshold);
     break;
-     /*
-   case PROP_HISTOGRAM:
-     g_value_set_pointer(value, filter->histogram);
-     break;*/
+  case PROP_MINDIGITALGAIN:
+    g_value_set_int(value, filter->minDigitalGain);
+    break;
+  case PROP_MAXDIGITALGAIN:
+    g_value_set_int(value, filter->maxDigitalGain);
+    break;
+    /*
+  case PROP_HISTOGRAM:
+    g_value_set_pointer(value, filter->histogram);
+    break;*/
   default:
     G_OBJECT_WARN_INVALID_PROPERTY_ID(object, prop_id, pspec);
     break;
@@ -464,13 +485,6 @@ double valeur_moyenne(int histo[], int taille)
   }
 }
 
-
-
-
-
-
-
-
 static GstFlowReturn
 gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
 {
@@ -478,22 +492,22 @@ gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
   Gstautoexposure *filter;
 
   filter = GST_AUTOEXPOSURE(parent);
-  if(proc_once && filter->loadAndSaveConf)
-{
-	int tmp_exp,tmp_analog,tmp_digital;
-if(read_conf(&tmp_exp,&tmp_analog,&tmp_digital))
-{
-    	printf("Initial conf : exposure = %d analog_gain = %d digital_gain = %d\n", tmp_exp, tmp_analog, tmp_digital);
-	int exp = get_control("exposure");
-	printf("exp actual %d \n",exp);
-  	set_control("exposure", tmp_exp);
-	set_control("analog_gain", tmp_analog);
-	set_control("digital_gain", tmp_digital);
-	exp = get_control("analog_gain");
-	printf("exp actual %d \n",exp);
-}
-proc_once=0;
-}
+  if (proc_once && filter->loadAndSaveConf)
+  {
+    int tmp_exp, tmp_analog, tmp_digital;
+    if (read_conf(&tmp_exp, &tmp_analog, &tmp_digital))
+    {
+      printf("Initial conf : exposure = %d analog_gain = %d digital_gain = %d\n", tmp_exp, tmp_analog, tmp_digital);
+      int exp = get_control("exposure");
+      printf("exp actual %d \n", exp);
+      set_control("exposure", tmp_exp);
+      set_control("analog_gain", tmp_analog);
+      set_control("digital_gain", tmp_digital);
+      exp = get_control("analog_gain");
+      printf("exp actual %d \n", exp);
+    }
+    proc_once = 0;
+  }
   /* just push out the incoming buffer without touching it */
 
   GstMapInfo map;
@@ -528,14 +542,13 @@ proc_once=0;
       }
       global_mean = (global_mean * (1 + filter->optimize)) / ((float)filter->ROI2y - filter->ROI1y);
 
-
-      if(global_mean > filter->target - filter->tolerance && global_mean < filter->target + filter->tolerance)
+      if (global_mean > filter->target - filter->threshold && global_mean < filter->target + filter->threshold)
       {
-        if(converge==false)
+        if (converge == false)
         {
-          frames_to_converge=0;
-          converge=true;
-          g_print("Frames to converge : %d\n",frames_to_converge);
+          frames_to_converge = 0;
+          converge = true;
+          g_print("Frames to converge : %d\n", frames_to_converge);
         }
       }
       else
@@ -544,39 +557,39 @@ proc_once=0;
       }
       if (filter->useExpositionTime)
       {
-        algorithm_with_exposition(global_mean, filter->latency,  filter->target,  filter->maxExposition, filter->maxAnalogGain, filter->useDigitalGain, filter->tolerance);
+        algorithm_with_exposition(global_mean, filter->latency, filter->target, filter->maxExposition, filter->maxAnalogGain, filter->useDigitalGain, filter->minDigitalGain, filter->maxDigitalGain, filter->threshold);
       }
       else
       {
-        algorithm_without_exposition(global_mean, filter->latency, filter->target, filter->maxAnalogGain, filter->useDigitalGain, filter->tolerance);
+        algorithm_without_exposition(global_mean, filter->latency, filter->target, filter->maxAnalogGain, filter->useDigitalGain, filter->minDigitalGain, filter->maxDigitalGain, filter->threshold);
       }
-    }/*
-    else
-    {
-      int hist[256];
-      for (int i = 0; i < 256; i++)
-      {
-        hist[i] = 0;
-      }
+    } /*
+     else
+     {
+       int hist[256];
+       for (int i = 0; i < 256; i++)
+       {
+         hist[i] = 0;
+       }
 
-      for (int y = filter->ROI1y; y < filter->ROI2y; y += 1 + filter->optimize)
-      {
-        for (int x = filter->ROI1x; x < filter->ROI2x; x += 1 + filter->optimize)
-        {
-          hist[map.data[(y * width) + x]] += 1;
-        }
-      }
+       for (int y = filter->ROI1y; y < filter->ROI2y; y += 1 + filter->optimize)
+       {
+         for (int x = filter->ROI1x; x < filter->ROI2x; x += 1 + filter->optimize)
+         {
+           hist[map.data[(y * width) + x]] += 1;
+         }
+       }
 
-      int global_mean = valeur_moyenne(hist, 256);
-      if (filter->useExpositionTime)
-      {
-        algorithm_with_exposition(global_mean, filter->latency,  filter->target,  filter->maxExposition, filter->maxAnalogGain, filter->useDigitalGain);
-      }
-      else
-      {
-        algorithm_without_exposition(global_mean, filter->latency, filter->target, filter->maxAnalogGain, filter->useDigitalGain);
-      }
-    }*/
+       int global_mean = valeur_moyenne(hist, 256);
+       if (filter->useExpositionTime)
+       {
+         algorithm_with_exposition(global_mean, filter->latency,  filter->target,  filter->maxExposition, filter->maxAnalogGain, filter->useDigitalGain);
+       }
+       else
+       {
+         algorithm_without_exposition(global_mean, filter->latency, filter->target, filter->maxAnalogGain, filter->useDigitalGain);
+       }
+     }*/
   }
 
   gst_buffer_unmap(buf, &map);
@@ -589,19 +602,18 @@ static void gst_autoexposure_finalize(GObject *object)
   Gstautoexposure *filter;
 
   filter = GST_AUTOEXPOSURE(object);
-  if( filter->loadAndSaveConf)
+  if (filter->loadAndSaveConf)
   {
-int tmp_exp,tmp_analog,tmp_digital;
+    int tmp_exp, tmp_analog, tmp_digital;
 
-  	tmp_exp = get_control("exposure");
-	tmp_analog = get_control("analog_gain");
-	tmp_digital = get_control("digital_gain");
-write_conf(tmp_exp,tmp_analog,tmp_digital);
+    tmp_exp = get_control("exposure");
+    tmp_analog = get_control("analog_gain");
+    tmp_digital = get_control("digital_gain");
+    write_conf(tmp_exp, tmp_analog, tmp_digital);
   }
 
   g_print("driver closed\n");
   close_driver_access();
-  
 }
 
 /* entry point to initialize the plug-in
