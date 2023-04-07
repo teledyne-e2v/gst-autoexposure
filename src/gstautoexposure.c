@@ -548,7 +548,10 @@ gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
         {
 
           converge=true;
-          g_print("Frames to converge : %d\n",frames_to_converge);
+	  int exp = get_control("exposure");
+	  int an_gain = get_control("analog_gain");
+	  int dg_gain = get_control("digital_gain");
+          g_print("Frames to converge : %d   exposure : %d   analog_gain : %d   digital_gain : %d\n",frames_to_converge,exp,an_gain,dg_gain);
           frames_to_converge=0;
 
         }
