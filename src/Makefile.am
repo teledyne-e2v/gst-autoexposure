@@ -16,12 +16,12 @@ plugin_LTLIBRARIES = libgstautoexposure.la
 ## Plugin 1
 
 # sources used to compile this plug-in
-libgstautoexposure_la_SOURCES = gstautoexposure.c gstautoexposure.h api.c api.h algorithm.c algorithm.h
+libgstautoexposure_la_SOURCES = gstautoexposure.c gstautoexposure.h  algorithm.c algorithm.h
 
 # compiler and linker flags used to compile this plugin, set in configure.ac
 libgstautoexposure_la_CFLAGS = $(GST_CFLAGS) -O3
 libgstautoexposure_la_LIBADD = $(GST_LIBS)
-libgstautoexposure_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
+libgstautoexposure_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS) -I'/usr/local/include' -L'/usr/local/lib' 
 libgstautoexposure_la_LIBTOOLFLAGS = --tag=disable-static
 
 # headers we need but don't want installed
