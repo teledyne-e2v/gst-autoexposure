@@ -1,4 +1,4 @@
-project('gst-plugins-good', 'c',
+project('gst-autoexposure', 'c',
   version : '1.14.2',
   meson_version : '>= 0.49',
   default_options : [ 'warning_level=1',
