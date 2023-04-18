@@ -101,6 +101,11 @@ enum
   PROP_HISTOGRAM*/
 };
 
+
+void write_conf(int exposure, int analog_gain, int digital_gain);
+int read_conf(int *exposure, int *analog_gain, int *digital_gain);
+double valeur_moyenne(int histo[], int taille);
+
 void write_conf(int exposure, int analog_gain, int digital_gain)
 {
   FILE *fichier = fopen("/tmp/exposure.txt", "w");
@@ -116,13 +121,14 @@ void write_conf(int exposure, int analog_gain, int digital_gain)
 
 int read_conf(int *exposure, int *analog_gain, int *digital_gain)
 {
+int err;
   FILE *fichier = fopen("/tmp/exposure.txt", "r");
   if (fichier == NULL)
   {
     return 0;
   }
 
-  int err = fscanf(fichier, "%d %d %d", exposure, analog_gain, digital_gain);
+  err = fscanf(fichier, "%d %d %d", exposure, analog_gain, digital_gain);
   if (err == EOF)
   {
     return 0;
@@ -244,6 +250,7 @@ gst_autoexposure_class_init(GstautoexposureClass *klass)
 static void
 gst_autoexposure_init(Gstautoexposure *filter)
 {
+  char flux[] = "/dev/video0";
   filter->sinkpad = gst_pad_new_from_static_template(&sink_factory, "sink");
   gst_pad_set_event_function(filter->sinkpad,
                              GST_DEBUG_FUNCPTR(gst_autoexposure_sink_event));
@@ -275,7 +282,9 @@ gst_autoexposure_init(Gstautoexposure *filter)
   filter->threshold = 10;
   filter->minDigitalGain = 256;
   filter->maxDigitalGain = 4096;
-  initialization("/dev/video0", 2);
+  
+
+  initialization(flux, 2);
 }
 
 static void
@@ -487,6 +496,16 @@ static GstFlowReturn
 gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
 {
 
+  GstMapInfo map;
+
+  GstCaps *caps = gst_pad_get_current_caps(pad);
+  GstStructure *s = gst_caps_get_structure(caps, 0);
+  gboolean res;
+  gint width, height;
+
+  char dig_gain[] = "digital_gain";
+  char ana_gain[] = "analog_gain";
+  char expo[] = "exposure";
   Gstautoexposure *filter;
 
   filter = GST_AUTOEXPOSURE(parent);
@@ -495,25 +514,22 @@ gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
     int tmp_exp, tmp_analog, tmp_digital;
     if (read_conf(&tmp_exp, &tmp_analog, &tmp_digital))
     {
+      int exp = get_control(expo);
       printf("Initial conf : exposure = %d analog_gain = %d digital_gain = %d\n", tmp_exp, tmp_analog, tmp_digital);
-      int exp = get_control("exposure");
+
       printf("exp actual %d \n", exp);
-      set_control("exposure", tmp_exp);
-      set_control("analog_gain", tmp_analog);
-      set_control("digital_gain", tmp_digital);
-      exp = get_control("analog_gain");
+      set_control(expo, tmp_exp);
+      set_control(ana_gain, tmp_analog);
+      set_control(dig_gain, tmp_digital);
+      exp = get_control(ana_gain);
       printf("exp actual %d \n", exp);
     }
     proc_once = 0;
   }
   /* just push out the incoming buffer without touching it */
 
-  GstMapInfo map;
+
   gst_buffer_map(buf, &map, GST_MAP_READ);
-  GstCaps *caps = gst_pad_get_current_caps(pad);
-  GstStructure *s = gst_caps_get_structure(caps, 0);
-  gboolean res;
-  gint width, height;
   // we need to get the final caps on the buffer to get the size
   res = gst_structure_get_int(s, "width", &width);
   res |= gst_structure_get_int(s, "height", &height);
@@ -545,10 +561,11 @@ gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
         if (converge == false)
         {
 
+
+	  int exp = get_control(expo);
+	  int an_gain = get_control(ana_gain);
+	  int dg_gain = get_control(dig_gain);
           converge=true;
-	  int exp = get_control("exposure");
-	  int an_gain = get_control("analog_gain");
-	  int dg_gain = get_control("digital_gain");
           g_print("Frames to converge : %d   exposure : %d   analog_gain : %d   digital_gain : %d\n",frames_to_converge,exp,an_gain,dg_gain);
           frames_to_converge=0;
 
@@ -603,6 +620,9 @@ gst_autoexposure_chain(GstPad *pad, GstObject *parent, GstBuffer *buf)
 
 static void gst_autoexposure_finalize(GObject *object)
 {
+  char dig_gain[] = "digital_gain";
+  char ana_gain[] = "analog_gain";
+  char expo[] = "exposure";
   Gstautoexposure *filter;
 
   filter = GST_AUTOEXPOSURE(object);
@@ -610,9 +630,9 @@ static void gst_autoexposure_finalize(GObject *object)
   {
     int tmp_exp, tmp_analog, tmp_digital;
 
-    tmp_exp = get_control("exposure");
-    tmp_analog = get_control("analog_gain");
-    tmp_digital = get_control("digital_gain");
+    tmp_exp = get_control(expo);
+    tmp_analog = get_control(ana_gain);
+    tmp_digital = get_control(dig_gain);
     write_conf(tmp_exp, tmp_analog, tmp_digital);
   }
 
