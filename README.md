@@ -119,7 +119,7 @@ Autoexposure with limited usage of gain to limit noise:
 
 ### With NVIDIA plugins (Jetsons only)
 
-##### Note : You should have update the nvvidconv plugin to support GRAY8, if not the image will be grayed out.
+##### Note : You should have update the nvvidconv plugin to support GRAY8, if not the image will be grayed out. Github link : https://github.com/teledyne-e2v/gst-nvvidconv.
 
 Simple autoexposure using default parameters:
 
