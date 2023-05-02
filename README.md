@@ -1,7 +1,7 @@
 # gst-autoexposure
 Autoexposure gstreamer plugin for OPTIMOM module
 
-# Version 1.0
+# Version 1.1
 
 # About
 
@@ -54,8 +54,6 @@ https://github.com/teledyne-e2v/Yocto-files
 First you must make sure that your device's clock is correctly setup.
 Otherwise the compilation will fail.
 
-### Using Meson 
-
 In the **gst-autoexposure** folder do:
 
 ```
@@ -68,25 +66,9 @@ ninja -C build
 sudo ninja -C build install
 ```
 
-### Using Autotools (deprecated)
-
-In the **gst-autoexposure** folder do:
-```
-bash autogen.sh
-```
-```
-make
-```
-
-```
-sudo make install
-```
-
 ## Yocto (IMX)
 First you must make sure that your device's clock is correctly setup.
 Otherwise the compilation will fail.
-
-### Using Meson 
 
 In the **gst-autoexposure** folder do:
 
@@ -95,16 +77,6 @@ meson build
 ```
 ```
 ninja -C build install
-```
-
-### Using Autotools (deprecated)
-
-In the **gst-autoexposure** folder do:
-```
-bash autogen.sh
-```
-```
-make install
 ```
 
 # Installation test
