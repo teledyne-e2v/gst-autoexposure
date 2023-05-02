@@ -117,9 +117,9 @@ Autoexposure with limited usage of gain to limit noise:
 
 	gst-launch-1.0 v4l2src ! autoexposure maxAnalogGain=8 useDigitalGain=false maxExposition=200000 ! queue ! videoconvert ! queue ! xvimagesink sync=false
 
-### With NVIDIA plugins
+### With NVIDIA plugins (Jetsons only)
 
-Note : You should have update the nvvidconv plugin to support GRAY8, if not the image will be grayed out.
+##### Note : You should have update the nvvidconv plugin to support GRAY8, if not the image will be grayed out.
 
 Simple autoexposure using default parameters:
 
