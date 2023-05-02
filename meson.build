@@ -1,5 +1,5 @@
 project('gst-autoexposure', 'c',
-  version : '1.14.2',
+  version : '1.1.0',
   meson_version : '>= 0.49',
   default_options : [ 'warning_level=1',
                       'buildtype=debugoptimized' ])
