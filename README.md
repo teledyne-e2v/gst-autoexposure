@@ -145,7 +145,7 @@ Autoexposure with limited usage of gain to limit noise:
 	- Boolean. 
 	- Default: true
 
--  optimize            : Optimization level, used to reduce CPU load
+-  optimize            : Optimization level, used to reduce CPU load (process use less pixels)
 	- flags: readable, writable
 	- Integer. 
 	- Range: 0 - 5 
