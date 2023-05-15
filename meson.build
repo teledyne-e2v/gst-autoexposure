@@ -1,5 +1,5 @@
 project('gst-autoexposure', 'c',
-  version : '1.0.0',
+  version : '1.1.0',
   meson_version : '>= 0.43',
   default_options : [ 'warning_level=1',
                       'buildtype=debugoptimized' ])
@@ -198,10 +198,10 @@ gstautoexposure = library('gstautoexposure',
 )
 
 conf_data = configuration_data()
-conf_data.set('package_version', '1.0.0')
-conf_data.set('package_name', 'autoexposure')
-conf_data.set('package_string', 'autoexposure 1.0.0')
-conf_data.set('tar_name', 'autoexposure')
+conf_data.set('package_version', meson.project_version())
+conf_data.set('package_name', meson.project_name())
+conf_data.set('package_string', meson.project_name() + meson.project_version())
+conf_data.set('tar_name', meson.project_name())
 configure_file(input : 'config.h.in',
                output : 'config.h',
                configuration : conf_data)
