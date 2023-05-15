@@ -17,7 +17,7 @@ The following libraries are required for this plugin.
 - libgstreamer1.0-dev
 - libgstreamer-plugins-base1.0-dev
 - gcc
-- meson (>= 0.49)
+- meson
 - ninja
 - gstreamer-1.0
 
