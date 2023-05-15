@@ -667,7 +667,7 @@ autoexposure_init(GstPlugin *autoexposure)
  * compile this code. GST_PLUGIN_DEFINE needs PACKAGE to be defined.
  */
 #ifndef PACKAGE
-#define PACKAGE "myfirstautoexposure"
+#define PACKAGE "autoexposure"
 #endif
 
 /* gstreamer looks for this structure to register autoexposures
