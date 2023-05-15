@@ -1,6 +1,5 @@
 #include "algorithm.h"
-#include "math.h"
-
+#include <math.h>
 float algorithm_digital_gain(int target, float global_mean, int digital_gain, int min_digital_gain, int max_digital_gain);
 float algorithm_analog_gain(int target, float global_mean, int max_analog_gain);
 float algorithm_exposition(int target, float global_mean, int max_exposition);
