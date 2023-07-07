@@ -18,14 +18,13 @@ The following libraries are required for this plugin.
 - libgstreamer-plugins-base1.0-dev
 - gcc
 - meson
-- ninja
 - Topaz api
 
 
 ### Debian based system (Jetson): 
 
 ```
-sudo apt install v4l-utils libv4l-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev meson ninja
+sudo apt install v4l-utils libv4l-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev meson
 ```
 
 ### Yocto based system (IMX): 
