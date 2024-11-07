@@ -18,7 +18,7 @@ The following libraries are required for this plugin.
 - libgstreamer-plugins-base1.0-dev
 - gcc
 - meson
-- Topaz api: https://github.com/teledyne-e2v/topaz-api
+- Topaz api: https
 
 
 ### Debian based system (Jetson): 
@@ -35,7 +35,7 @@ https://github.com/teledyne-e2v/Yocto-files
 ##### Note : You can also compile them on your installed distribution but it will take a long time to compile (Do it only if you miss one or two packages)
 
 
-## Topaz api install
+### Topaz api install
 Take a look at this github: 
 https://github.com/teledyne-e2v/topaz-api
 
