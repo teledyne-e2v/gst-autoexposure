@@ -18,7 +18,7 @@ The following libraries are required for this plugin.
 - libgstreamer-plugins-base1.0-dev
 - gcc
 - meson
-- Topaz api
+- Topaz api: https://github.com/teledyne-e2v/topaz-api
 
 
 ### Debian based system (Jetson): 
